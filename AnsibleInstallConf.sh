@@ -11,16 +11,11 @@
 
 #!/bin/bash
 
-# Get the current user and their home directory
-if [ -n "$SUDO_USER" ]; then
-    user_name="$SUDO_USER"
-else
-    user_name="$USER"
+# Check if Ansible, Python, and Pip are already installed
+if command -v ansible &>/dev/null && command -v python3 &>/dev/null && command -v pip3 &>/dev/null; then
+    echo "Ansible, Python, and Pip are already installed. Exiting."
+    exit 0
 fi
-
-user_home="/home/$user_name"
-
-echo "The Ansible project will be placed in the user's home directory: $user_home"
 
 # Function to detect the Linux distribution family
 detect_linux_family() {
@@ -42,14 +37,14 @@ title="
 ####################################################\n\n"
 explain="According to recommended best practice, this script will install Ansible and create the tree structure and models in the project folder.\n"
 # Default project path is the user's home directory
-path="$user_home"
+path="/home/$USER"
 
 # List of packages to install, separated by spaces
 packages="tree python3 ansible"
 
 # Script
-echo -e "$title"
-echo -e "\n$explain"
+printf "$title"
+printf "$explain"
 
 # Check user privileges
 if [ "$(id -u)" != "0" ]; then
@@ -195,9 +190,12 @@ while true; do
         # Create ansible.cfg with custom settings
         echo -e "[defaults]\nvault_password_file = /path/to/vault_password_file\nvault_identity_list = /path/to/secret_vars.yml" | sudo tee "$path/$project_name/ansible.cfg" > /dev/null
 
-        #Create vault.yaml with an example
-        echo -e "---\nmysql_user: "admin"\nmysql_password: "Test_34535$"\nroot_password: "Test_34049$""
+        # Create vault.yaml with an example
+        echo -e "---\nmysql_user: "admin"\nmysql_password: "Test_34535"\nroot_password: "Test_34049"" | sudo tee "$path/$project_name/vault.yaml" > /dev/null
 
+        # Create .gitignore to exclude some file (preconfigured vault file)
+        echo -e "**/*vault*\n**/*secret.yml*\n**/*secret_data/*\n**/*.log\ntemp/\ndata/\nrequirements.yml\nmy_ansible.cfg\nuser_configs/" | sudo tee "$path/$project_name/.gitignore" > /dev/null
+        
         # Display a warning message
         echo "Warning: You need to configure the ansible.cfg file in the project directory with your specific paths."
     fi
