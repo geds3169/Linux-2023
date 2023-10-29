@@ -57,7 +57,7 @@ explain="According to recommended best practices, this script will create the di
 linux_family=$(detect_linux_family)
 
 # List of packages to install
-packages=("python3" "python3-pip" "ansible")
+packages="python3" "python3-pip" "ansible"
 
 # Install required packages
 for package in "${packages[@]}"; do
