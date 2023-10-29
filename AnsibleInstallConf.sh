@@ -183,9 +183,7 @@ EOL
         # Display the project tree with the 'tree' command
         tree -a "$project_directory"
 
-fi
+    fi
 done
 
 printf "All tasks have been completed. The script is finished.\n"
-
-
