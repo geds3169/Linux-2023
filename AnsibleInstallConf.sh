@@ -29,24 +29,28 @@ install_package() {
     package_name="$1"
     case $linux_family in
         "debian" | "ubuntu")
-            if ! command -v $package_name &>/dev/null; then
-                sudo apt-get update
-                sudo apt-get install -y $package_name
-            fi
+            install_command="sudo apt-get install"
             ;;
         "rhel" | "fedora")
-            if ! command -v $package_name &>/dev/null; then
-                if command -v dnf &> /dev/null; then
-                    sudo dnf install -y $package_name
-                elif command -v yum &> /dev/null; then
-                    sudo yum install -y $package_name
-                fi
+            if command -v dnf &> /dev/null; then
+                install_command="sudo dnf install"
+            elif command -v yum &> /dev/null; then
+                install_command="sudo yum install"
+            else
+                printf "Warning: Distribution family not supported. Packages may not be installed.\n\n"
+                return
             fi
             ;;
         *)
-            printf "Warning: Distribution family not supported. Package $package_name may not be installed.\n\n"
+            printf "Warning: Distribution family not supported. Packages may not be installed.\n\n"
+            return
             ;;
     esac
+
+    # Use eval to install the package only if it's not already installed
+    if ! command -v $package_name &>/dev/null; then
+        eval "$install_command -y $package_name"
+    fi
 }
 
 # Variables
@@ -64,10 +68,9 @@ for package in $packages; do
     install_package "$package"
 done
 
-
 # Display package versions
 printf "Installed packages:\n"
-for package in "${packages[@]}"; do
+for package in $packages; do
     printf "$package "
     if command -v $package &>/dev/null; then
         $package --version | head -n 1
@@ -146,18 +149,44 @@ while true; do
             "$project_directory/roles/webtier/module_utils" \
             "$project_directory/roles/webtier/lookup_plugins"
 
+
         # Create site.yml, webservers.yml, dbservers.yml files
         touch "$project_directory/site.yml" \
             "$project_directory/webservers.yml" \
             "$project_directory/dbservers.yml"
-
+        # Create an ansible.cfg file with custom settings
+        cat <<EOL > "$project_directory/ansible.cfg"
+[defaults]
+vault_password_file = /path/to/vault_password_file
+vault_identity_list = /path/to/secret_vars.yml
+EOL
+        # Create a vault.yaml file with an example
+        cat <<EOL > "$project_directory/vault.yaml"
+---
+mysql_user: "admin"
+mysql_password: "Test_34535"
+root_password: "Test_34049"
+EOL
+        # Create a .gitignore file
+        cat <<EOL > "$project_directory/.gitignore"
+**/*vault*
+**/*secret.yml*
+**/*secret_data/*
+**/*.log
+temp/
+data/
+requirements.yml
+my_ansible.cfg
+user_configs/
+EOL
+        printf "\nRemember:\n"
+        printf "    - Modify the contents of the ansible.cfg file for vault configuration and other purposes.\n"
+        printf "    - Encrypt your secret files (example vault.yml) and fill in the .gitignore\n\n"
         # Just a message reminding you of the directory creation and the project name
         printf "Project structure has been created for '$project_name'.\n\n"
-
         # Display the project tree with the 'tree' command
         tree -a "$project_directory"
     fi
 done
 
 printf "All tasks have been completed. The script is finished.\n"
-echo "test"
