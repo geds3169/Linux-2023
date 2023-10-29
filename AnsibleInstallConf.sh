@@ -11,7 +11,7 @@
 
 #!/bin/bash
 
-# Function to detect the Linux distribution family
+# Fonction pour détecter la famille de distribution Linux
 detect_linux_family() {
     if [ -e /etc/os-release ]; then
         linux_family=$(grep -i "^ID_LIKE" /etc/os-release | cut -d'=' -f2)
@@ -25,21 +25,18 @@ detect_linux_family() {
 }
 
 # Variables
-title="
-####################################################
-# Install Ansible and create folder tree structure #
-####################################################\n\n"
-explain="According to recommended best practice, this script will create the tree structure and models in the project folder.\n"
-# Default project path is the user's home directory
+title="####################################\n# Install Ansible and create folder tree structure #\n####################################\n\n"
+explain="According to recommended best practices, this script will create the directory structure for your project.\n"
+# Le chemin par défaut du projet est le répertoire personnel de l'utilisateur
 path="/home/$USER"
 
-# Check if Ansible is installed
+# Vérifier si Ansible est installé
 if ! command -v ansible &>/dev/null; then
     echo "Ansible is not installed. Installing Ansible..."
-    
-    # Check distribution family to use correct installation commands
+
+    # Vérifier la famille de distribution pour utiliser les commandes d'installation appropriées
     linux_family=$(detect_linux_family)
-    
+
     case $linux_family in
         "debian" | "ubuntu")
             install_command="sudo apt install"
@@ -60,16 +57,15 @@ if ! command -v ansible &>/dev/null; then
             ;;
     esac
 
-    # Use eval to install Ansible according to distribution (automatic selection of package managers)
+    # Utiliser eval pour installer Ansible en fonction de la distribution (sélection automatique des gestionnaires de paquets)
     eval "$install_command -y ansible"
 fi
 
-# Script
-printf "$title"
-printf "$explain"
-
 while true; do
-    # Check loop for project and tree creation
+    printf "$title"
+    printf "$explain"
+
+    # Demander le nom du projet (nom du répertoire)
     read -p "Please enter the project name (directory name), or type 'exit' to quit: " project_name
 
     if [ "$project_name" = "exit" ]; then
@@ -77,58 +73,65 @@ while true; do
         exit 0
     fi
 
-    # Create the project directory
-    sudo mkdir -p "$path/$project_name"
+    # Créer le répertoire du projet
+    project_directory="$path/$project_name"
+    
+    if [ -d "$project_directory" ]; then
+        echo "Project directory '$project_directory' already exists."
+    else
+        # Créer le répertoire du projet
+        if mkdir -p "$project_directory"; then
+            echo "Project '$project_name' has been created in '$project_directory'."
+            
+            # Création de la structure de répertoire
+            sudo mkdir -p "$project_directory/production" \
+                "$project_directory/staging" \
+                "$project_directory/group_vars/clear" \
+                "$project_directory/group_vars/secret" \
+                "$project_directory/host_vars" \
+                "$project_directory/library" \
+                "$project_directory/module_utils" \
+                "$project_directory/filter_plugins" \
+                "$project_directory/roles/common/tasks" \
+                "$project_directory/roles/common/handlers" \
+                "$project_directory/roles/common/templates" \
+                "$project_directory/roles/common/files" \
+                "$project_directory/roles/common/vars" \
+                "$project_directory/roles/common/defaults" \
+                "$project_directory/roles/common/meta" \
+                "$project_directory/roles/common/library" \
+                "$project_directory/roles/common/module_utils" \
+                "$project_directory/roles/common/lookup_plugins" \
+                "$project_directory/roles/webtier/tasks" \
+                "$project_directory/roles/webtier/handlers" \
+                "$project_directory/roles/webtier/templates" \
+                "$project_directory/roles/webtier/files" \
+                "$project_directory/roles/webtier/vars" \
+                "$project_directory/roles/webtier/defaults" \
+                "$project_directory/roles/webtier/meta" \
+                "$project_directory/roles/webtier/library" \
+                "$project_directory/roles/webtier/module_utils" \
+                "$project_directory/roles/webtier/lookup_plugins"
 
-    # Creating the Ansible tree structure in one sudo command with line breaks
-    sudo mkdir -p "$path/$project_name/production" \
-        "$path/$project_name/staging" \
-        "$path/$project_name/group_vars/clear" \
-        "$path/$project_name/group_vars/secret" \
-        "$path/$project_name/host_vars" \
-        "$path/$project_name/library" \
-        "$path/$project_name/module_utils" \
-        "$path/$project_name/filter_plugins" \
-        "$path/$project_name/roles/common/tasks" \
-        "$path/$project_name/roles/common/handlers" \
-        "$path/$project_name/roles/common/templates" \
-        "$path/$project_name/roles/common/files" \
-        "$path/$project_name/roles/common/vars" \
-        "$path/$project_name/roles/common/defaults" \
-        "$path/$project_name/roles/common/meta" \
-        "$path/$project_name/roles/common/library" \
-        "$path/$project_name/roles/common/module_utils" \
-        "$path/$project_name/roles/common/lookup_plugins" \
-        "$path/$project_name/roles/webtier/tasks" \
-        "$path/$project_name/roles/webtier/handlers" \
-        "$path/$project_name/roles/webtier/templates" \
-        "$path/$project_name/roles/webtier/files" \
-        "$path/$project_name/roles/webtier/vars" \
-        "$path/$project_name/roles/webtier/defaults" \
-        "$path/$project_name/roles/webtier/meta" \
-        "$path/$project_name/roles/webtier/library" \
-        "$path/$project_name/roles/webtier/module_utils" \
-        "$path/$project_name/roles/webtier/lookup_plugins"
+            # Création de fichiers site.yml, webservers.yml, dbservers.yml
+            sudo touch "$project_directory/site.yml" \
+                "$project_directory/webservers.yml" \
+                "$project_directory/dbservers.yml"
 
-    # File creation site.yml, webservers.yml, dbservers.yml
-    sudo touch "$path/$project_name/site.yml" \
-        "$path/$project_name/webservers.yml" \
-        "$path/$project_name/dbservers.yml"
+            # Création d'un fichier ansible.cfg avec des paramètres personnalisés
+            echo -e "[defaults]\nvault_password_file = /path/to/vault_password_file\nvault_identity_list = /path/to/secret_vars.yml" | sudo tee "$project_directory/ansible.cfg" > /dev/null
 
-    # Check if Ansible is functional
-    ansible --version
+            # Création d'un fichier vault.yaml avec un exemple
+            echo -e "---\nmysql_user: \"admin\"\nmysql_password: \"Test_34535\"\nroot_password: \"Test_34049\"" | sudo tee "$project_directory/vault.yaml" > /dev/null
 
-    # Create ansible.cfg with custom settings
-    echo -e "[defaults]\nvault_password_file = /path/to/vault_password_file\nvault_identity_list = /path/to/secret_vars.yml" | sudo tee "$path/$project_name/ansible.cfg" > /dev/null
+            # Création d'un fichier .gitignore pour exclure certains fichiers (fichier de coffre-fort préconfiguré)
+            echo -e "**/*vault*\n**/*secret.yml*\n**/*secret_data/*\n**/*.log\ntemp/\ndata/\nrequirements.yml\nmy_ansible.cfg\nuser_configs/" | sudo tee "$project_directory/.gitignore" > /dev/null
 
-    # Create vault.yaml with an example
-    echo -e "---\nmysql_user: "admin"\nmysql_password: "Test_34535"\nroot_password: "Test_34049"" | sudo tee "$path/$project_name/vault.yaml" > /dev/null
-
-    # Create .gitignore to exclude some file (preconfigured vault file)
-    echo -e "**/*vault*\n**/*secret.yml*\n**/*secret_data/*\n**/*.log\ntemp/\ndata/\nrequirements.yml\nmy_ansible.cfg\nuser_configs/" | sudo tee "$path/$project_name/.gitignore" > /dev/null
-
-    echo "Project '$project_name' has been created."
-
+            echo "Project structure has been created for '$project_name'."
+        else
+            echo "Failed to create project directory '$project_directory'."
+        fi
+    fi
 done
 
 echo "All tasks have been completed. The script is finished."
