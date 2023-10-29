@@ -1,14 +1,3 @@
-######################################
-# Nom du script:  AnsibleInstallConf.sh
-# Utilité: Ce script installe Ansible et configure la structure de répertoire conformément aux meilleures pratiques.
-# Utilisation: 
-#   - Assurez-vous que le script est exécutable avec : sudo chmod +x AnsibleInstallConf.sh
-#   - Exécutez le script avec : sudo -H ./AnsibleInstallConf.sh
-#   - L'option -H garantit que le répertoire du projet et l'environnement Ansible sont créés dans le répertoire de l'utilisateur qui exécute le script.
-# Auteur: Guilhem SCHLOSSER
-# Dernière mise à jour: 28/10/2023
-######################################
-
 #!/bin/bash
 
 # Get the current user and their home directory
@@ -101,10 +90,13 @@ if [ -n "$VIRTUAL_ENV" ]; then
 else
     echo "Activating Ansible environment..."
     ansible_env="$user_home/ansible-env"  # Absolute path to the Ansible environment
+
     if [ -d "$ansible_env" ]; then
         source "$ansible_env/bin/activate"
     else
-        echo "Ansible environment not found. You may need to create it first."
+        echo "Creating Ansible environment..."
+        python3 -m venv "$ansible_env"
+        source "$ansible_env/bin/activate"
     fi
 fi
 
@@ -160,10 +152,6 @@ while true; do
                 "$path/$project_name/webservers.yml" \
                 "$path/$project_name/dbservers.yml"
 
-            # Generates a fully commented Ansible configuration file
-            cd "$path/$project_name/"
-            sudo ansible-config init --disabled > ansible.cfg
-
             # Structure display
             echo "Ansible structure has been created in the $path/$project_name."
             tree -a "$path/$project_name"
@@ -215,7 +203,7 @@ while true; do
 
         # Generates a fully commented Ansible configuration file
         cd "$path/$project_name/"
-        sudo ansible-config init --disabled > ansible.cfg
+        echo -e "[defaults]\nroles_path = roles" > ansible.cfg
 
         # Structure display
         echo "Ansible structure has been created in the $path/$project_name."
