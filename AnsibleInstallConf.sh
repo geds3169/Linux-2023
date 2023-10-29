@@ -1,28 +1,21 @@
-#!/bin/bash
+######################################
+# Nom du script:  AnsibleInstallConf.sh
+# Utilité: ce script permet l'installation de Ansible ainsi que son arborescence suivant les recommandations et bonnes pratiques
+# Usage: sudo chmod +x AnsibleInstallConf.sh
+#        sudo ./AnsibleInstallConf.sh
+# Auteur: Guilhem SCHLOSSER
+# Mise à jour le: 28/10/2023
+# 
+# Future implémentation gestion des secrets
+######################################
 
-# Function to detect the Linux distribution family
-detect_linux_family() {
-    if [ -e /etc/os-release ]; then
-        . /etc/os-release
-        if [ -n "$ID_LIKE" ]; then
-            echo "$ID_LIKE"
-        elif [ -n "$ID" ]; then
-            echo "$ID"
-        else
-            echo "Unknown"
-        fi
-    else
-        echo "Unknown"
-    fi
-}
+#!/bin/bash
 
 # Variables
 title="Install Ansible and folder tree structure\n\n"
-explain="According to recommended best practice, this script will:\nInstall Python3, pip, and Ansible;\nCreate the tree structure and models in the project folder."
+explain=" According to recommended best practice, this script will:\nInstall Ansible for the user;\nCreate the tree structure and models in the project folder."
 # Default project path is the user's home directory
 path="$HOME"
-# List of packages to install, separated by spaces
-packages="tree python3 python3-pip"
 
 # Script
 echo -e "$title"
@@ -30,18 +23,15 @@ echo -e "$explain"
 
 # Check user privileges
 if [ "$(id -u)" != "0" ]; then
-    echo "This script must be run as root or with sudo privileges."
+    echo "Ce script doit être exécuté en tant que root ou avec des privilèges sudo."
     exit 1
 fi
 
 # Check distribution family to use correct installation commands
-linux_family=$(detect_linux_family)
-
-case $linux_family in
-    "debian" | "ubuntu")
+if [ -e /etc/os-release ]; then
+    if grep -i "Debian" /etc/os-release; then
         install_command="sudo apt install"
-        ;;
-    "rhel" | "fedora")
+    elif grep -i "Fedora" /etc/os-release || grep -i "Red Hat" /etc/os-release; then
         if command -v dnf &> /dev/null; then
             install_command="sudo dnf install"
         elif command -v yum &> /dev/null; then
@@ -50,135 +40,19 @@ case $linux_family in
             echo "Neither DNF nor YUM is available for package installation."
             exit 1
         fi
-        ;;
-    *)
-        echo "Distribution family not supported."
-        exit 1
-        ;;
-esac
-
-# Use eval to install packages according to distribution (automatic selection of package managers)
-eval "$install_command -y $packages"
-
-# Install Python 3 and Ansible
-if ! command -v python3 &>/dev/null; then
-    echo "Installing Python3..."
-    eval "$install_command -y python3"
-fi
-
-if ! command -v pip3 &>/dev/null; then
-    echo "Installing pip3..."
-    eval "$install_command -y python3-pip"
-fi
-
-if ! command -v ansible &>/dev/null; then
-    echo "Installing Ansible..."
-    sudo python3 -m pip install --user ansible
-fi
-
-# Check loop for project and tree creation
-while true; do
-    read -p "Please enter the project name (directory name) : " project_name
-
-    if [ -d "$path/$project_name" ]; then
-        if [ -z "$(ls -A "$path/$project_name")" ]; then
-            echo "The directory exists and is empty. Create the Ansible project tree."
-
-            # Creating the Ansible tree structure in one sudo command with line breaks
-            sudo mkdir -p "$path/$project_name/production" \
-                "$path/$project_name/staging" \
-                "$path/$project_name/group_vars/clear" \
-                "$path/$project_name/group_vars/secret" \
-                "$path/$project_name/host_vars" \
-                "$path/$project_name/library" \
-                "$path/$project_name/module_utils" \
-                "$path/$project_name/filter_plugins" \
-                "$path/$project_name/roles/common/tasks" \
-                "$path/$project_name/roles/common/handlers" \
-                "$path/$project_name/roles/common/templates" \
-                "$path/$project_name/roles/common/files" \
-                "$path/$project_name/roles/common/vars" \
-                "$path/$project_name/roles/common/defaults" \
-                "$path/$project_name/roles/common/meta" \
-                "$path/$project_name/roles/common/library" \
-                "$path/$project_name/roles/common/module_utils" \
-                "$path/$project_name/roles/common/lookup_plugins" \
-                "$path/$project_name/roles/webtier/tasks" \
-                "$path/$project_name/roles/webtier/handlers" \
-                "$path/$project_name/roles/webtier/templates" \
-                "$path/$project_name/roles/webtier/files" \
-                "$path/$project_name/roles/webtier/vars" \
-                "$path/$project_name/roles/webtier/defaults" \
-                "$path/$project_name/roles/webtier/meta" \
-                "$path/$project_name/roles/webtier/library" \
-                "$path/$project_name/roles/webtier/module_utils" \
-                "$path/$project_name/roles/webtier/lookup_plugins"
-
-            # File creation site.yml, webservers.yml, dbservers.yml
-            sudo touch "$path/$project_name/site.yml" \
-                "$path/$project_name/webservers.yml" \
-                "$path/$project_name/dbservers.yml"
-
-            # Generates a fully commented Ansible configuration file
-            cd "$path/$project_name/"
-            sudo ansible-config init --disabled > ansible.cfg
-
-            # Structure display
-            echo "Ansible structure has been created in the $path/$project_name."
-            tree -a "$path/$project_name"
-
-            break
-        else
-            echo "The directory exists, but is not empty. Directory contents :"
-            ls "$path/$project_name"
-            read -p "Please choose another project name : " project_name
-        fi
     else
-        sudo mkdir -p "$path/$project_name"
-        echo "No directory named $project_name was found, so it was created."
-
-        # Creating the Ansible tree structure in one sudo command with line breaks
-        sudo mkdir -p "$path/$project_name/production" \
-            "$path/$project_name/staging" \
-            "$path/$project_name/group_vars/clear" \
-            "$path/$project_name/group_vars/secret" \
-            "$path/$project_name/host_vars" \
-            "$path/$project_name/library" \
-            "$path/$project_name/module_utils" \
-            "$path/$project_name/filter_plugins" \
-            "$path/$project_name/roles/common/tasks" \
-            "$path/$project_name/roles/common/handlers" \
-            "$path/$project_name/roles/common/templates" \
-            "$path/$project_name/roles/common/files" \
-            "$path/$project_name/roles/common/vars" \
-            "$path/$project_name/roles/common/defaults" \
-            "$path/$project_name/roles/common/meta" \
-            "$path/$project_name/roles/common/library" \
-            "$path/$project_name/roles/common/module_utils" \
-            "$path/$project_name/roles/common/lookup_plugins" \
-            "$path/$project_name/roles/webtier/tasks" \
-            "$path/$project_name/roles/webtier/handlers" \
-            "$path/$project_name/roles/webtier/templates" \
-            "$path/$project_name/roles/webtier/files" \
-            "$path/$project_name/roles/webtier/vars" \
-            "$path/$project_name/roles/webtier/defaults" \
-            "$path/$project_name/roles/webtier/meta" \
-            "$path/$project_name/roles/webtier/library" \
-            "$path/$project_name/roles/webtier/module_utils" \
-            "$path/$project_name/roles/webtier/lookup_plugins"
-
-        # File creation site.yml, webservers.yml, dbservers.yml
-        sudo touch "$path/$project_name/site.yml" \
-            "$path/$project_name/webservers.yml" \
-            "$path/$project_name/dbservers.yml"
-
-        # Generates a fully commented Ansible configuration file
-        cd "$path/$project_name/"
-        sudo ansible-config init --disabled > ansible.cfg
-
-        # Structure display
-        echo "Ansible structure has been created in the $path/$project_name."
-
-        break
+        echo "Distribution not supported."
+        exit 1
     fi
-done
+fi
+
+# Create a virtual environment for Ansible
+virtualenv ansible-env
+
+# Activate the virtual environment
+source ansible-env/bin/activate
+
+# Install Ansible
+pip install ansible
+
+# Rest of your script (project creation, etc.)
