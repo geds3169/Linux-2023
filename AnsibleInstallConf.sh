@@ -76,62 +76,65 @@ while true; do
     # Créer le répertoire du projet
     project_directory="$path/$project_name"
     
+    # Vérifier si le répertoire du projet existe déjà
     if [ -d "$project_directory" ]; then
         echo "Project directory '$project_directory' already exists."
     else
         # Créer le répertoire du projet
         if mkdir -p "$project_directory"; then
             echo "Project '$project_name' has been created in '$project_directory'."
-            
-            # Création de la structure de répertoire
-            mkdir -p "$project_directory/production" \
-                "$project_directory/staging" \
-                "$project_directory/group_vars/clear" \
-                "$project_directory/group_vars/secret" \
-                "$project_directory/host_vars" \
-                "$project_directory/library" \
-                "$project_directory/module_utils" \
-                "$project_directory/filter_plugins" \
-                "$project_directory/roles/common/tasks" \
-                "$project_directory/roles/common/handlers" \
-                "$project_directory/roles/common/templates" \
-                "$project_directory/roles/common/files" \
-                "$project_directory/roles/common/vars" \
-                "$project_directory/roles/common/defaults" \
-                "$project_directory/roles/common/meta" \
-                "$project_directory/roles/common/library" \
-                "$project_directory/roles/common/module_utils" \
-                "$project_directory/roles/common/lookup_plugins" \
-                "$project_directory/roles/webtier/tasks" \
-                "$project_directory/roles/webtier/handlers" \
-                "$project_directory/roles/webtier/templates" \
-                "$project_directory/roles/webtier/files" \
-                "$project_directory/roles/webtier/vars" \
-                "$project_directory/roles/webtier/defaults" \
-                "$project_directory/roles/webtier/meta" \
-                "$project_directory/roles/webtier/library" \
-                "$project_directory/roles/webtier/module_utils" \
-                "$project_directory/roles/webtier/lookup_plugins"
-
-            # Création des fichiers site.yml, webservers.yml, dbservers.yml
-            touch "$project_directory/site.yml" \
-                "$project_directory/webservers.yml" \
-                "$project_directory/dbservers.yml"
-
-            # Création d'un fichier ansible.cfg avec des paramètres personnalisés
-            echo -e "[defaults]\nvault_password_file = /path/to/vault_password_file\nvault_identity_list = /path/to/secret_vars.yml" | tee "$project_directory/ansible.cfg" > /dev/null
-
-            # Création d'un fichier vault.yaml avec un exemple
-            echo -e "---\nmysql_user: \"admin\"\nmysql_password: \"Test_34535\"\nroot_password: \"Test_34049\"" | tee "$project_directory/vault.yaml" > /dev/null
-
-            # Création d'un fichier .gitignore pour exclure certains fichiers (fichier de coffre-fort préconfiguré)
-            echo -e "**/*vault*\n**/*secret.yml*\n**/*secret_data/*\n**/*.log\ntemp/\ndata/\nrequirements.yml\nmy_ansible.cfg\nuser_configs/" | tee "$project_directory/.gitignore" > /dev/null
-
-            echo "Project structure has been created for '$project_name'."
         else
             echo "Failed to create project directory '$project_directory'."
+            exit 1
         fi
+
+        # Création de la structure de répertoire
+        mkdir -p "$project_directory/production" \
+            "$project_directory/staging" \
+            "$project_directory/group_vars/clear" \
+            "$project_directory/group_vars/secret" \
+            "$project_directory/host_vars" \
+            "$project_directory/library" \
+            "$project_directory/module_utils" \
+            "$project_directory/filter_plugins" \
+            "$project_directory/roles/common/tasks" \
+            "$project_directory/roles/common/handlers" \
+            "$project_directory/roles/common/templates" \
+            "$project_directory/roles/common/files" \
+            "$project_directory/roles/common/vars" \
+            "$project_directory/roles/common/defaults" \
+            "$project_directory/roles/common/meta" \
+            "$project_directory/roles/common/library" \
+            "$project_directory/roles/common/module_utils" \
+            "$project_directory/roles/common/lookup_plugins" \
+            "$project_directory/roles/webtier/tasks" \
+            "$project_directory/roles/webtier/handlers" \
+            "$project_directory/roles/webtier/templates" \
+            "$project_directory/roles/webtier/files" \
+            "$project_directory/roles/webtier/vars" \
+            "$project_directory/roles/webtier/defaults" \
+            "$project_directory/roles/webtier/meta" \
+            "$project_directory/roles/webtier/library" \
+            "$project_directory/roles/webtier/module_utils" \
+            "$project_directory/roles/webtier/lookup_plugins"
+
+        # Création des fichiers site.yml, webservers.yml, dbservers.yml
+        touch "$project_directory/site.yml" \
+            "$project_directory/webservers.yml" \
+            "$project_directory/dbservers.yml"
+
+        # Création d'un fichier ansible.cfg avec des paramètres personnalisés
+        echo -e "[defaults]\nvault_password_file = /path/to/vault_password_file\nvault_identity_list = /path/to/secret_vars.yml" | tee "$project_directory/ansible.cfg" > /dev/null
+
+        # Création d'un fichier vault.yaml avec un exemple
+        echo -e "---\nmysql_user: \"admin\"\nmysql_password: \"Test_34535\"\nroot_password: \"Test_34049\"" | tee "$project_directory/vault.yaml" > /dev/null
+
+        # Création d'un fichier .gitignore pour exclure certains fichiers (fichier de coffre-fort préconfiguré)
+        echo -e "**/*vault*\n**/*secret.yml*\n**/*secret_data/*\n**/*.log\ntemp/\ndata/\nrequirements.yml\nmy_ansible.cfg\nuser_configs/" | tee "$project_directory/.gitignore" > /dev/null
+
+        echo "Project structure has been created for '$project_name'."
     fi
 done
 
 echo "All tasks have been completed. The script is finished."
+
