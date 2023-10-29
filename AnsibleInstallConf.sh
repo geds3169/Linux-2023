@@ -10,8 +10,15 @@
 #!/bin/bash
 
 # Get the current user and their home directory
-current_user=$(whoami)
-current_user_home=$(eval echo ~$current_user)
+if [[ -n $SUDO_USER ]]; then
+    user_name="$SUDO_USER"
+else
+    user_name="$USER"
+fi
+
+user_home="/home/$user_name"
+
+echo "The ansible project and virtual environment will be placed in the user's home directory : $user_home"
 
 # Function to detect the Linux distribution family
 detect_linux_family() {
@@ -30,7 +37,7 @@ detect_linux_family() {
 title="Install Ansible and folder tree structure\n\n"
 explain="According to recommended best practice, this script will:\nInstall Python3, pip, and Ansible;\nCreate the tree structure and models in the project folder."
 # Default project path is the user's home directory
-path="$current_user_home"
+path="$user_home"
 # List of packages to install, separated by spaces
 packages="tree python3 python3-pip python3-venv"
 
