@@ -75,6 +75,10 @@ fi
 # Vérifier si Python est installé
 if ! command -v python &>/dev/null; then
     print_warning "Python is not installed. Please install Python."
+else
+    # Afficher la version de Python
+    python_version=$(python --version 2>&1)
+    echo "Python version: $python_version"
 fi
 
 # Vérifier si PIP est installé
@@ -85,14 +89,6 @@ fi
 # Afficher la version d'Ansible
 ansible_version=$(ansible --version | head -n 1)
 echo "Ansible version: $ansible_version"
-
-# Afficher la version de Python
-python_version=$(python --version 2>&1)
-echo "Python version: $python_version"
-
-# Afficher la version de PIP
-pip_version=$(pip --version 2>&1)
-echo "PIP version: $pip_version"
 
 while true; do
     printf "$title"
@@ -116,6 +112,8 @@ while true; do
         # Créer le répertoire du projet dans le répertoire personnel de l'utilisateur
         if mkdir -p "$project_directory"; then
             echo "Project '$project_name' has been created in '$project_directory'."
+            # Display a warning message
+            echo "Warning: You need to configure the ansible.cfg file in the project directory with your specific paths."
         else
             echo "Failed to create project directory '$project_directory'."
             exit 1
@@ -165,11 +163,13 @@ while true; do
         # Création d'un fichier .gitignore pour exclure certains fichiers (fichier de coffre-fort préconfiguré)
         echo -e "**/*vault*\n**/*secret.yml*\n**/*secret_data/*\n**/*.log\ntemp/\ndata/\nrequirements.yml\nmy_ansible.cfg\nuser_configs/" | tee "$project_directory/.gitignore" > /dev/null
 
+        # Just a message reminding you of the directory creation and the project name
         echo "Project structure has been created for '$project_name'."
+
+        # # Display the project tree with the 'tree' command
+        tree "$project_directory"
+
     fi
 done
-
-# Afficher l'arborescence du projet avec la commande 'tree'
-tree "$project_directory"
 
 echo "All tasks have been completed. The script is finished."
