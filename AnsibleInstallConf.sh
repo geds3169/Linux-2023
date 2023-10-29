@@ -1,3 +1,11 @@
+######################################
+# Nom du script:  AnsibleInstallConf.sh
+# Utilité: ce script permet l'installation de Ansible ainsi que son arborescence suivant les recommandations et bonnes pratiques
+# Usage: sudo; chmod +x AnsibleInstallConf.sh
+# Auteur: Guilhem SCHLOSSER
+# Mise à jour le: 28/10/2023
+######################################
+
 #!/bin/bash
 
 # Function to detect the Linux distribution family
@@ -17,11 +25,11 @@ detect_linux_family() {
 }
 
 # Variables
-title="Install Ansible in a Virtual Environment\n\n"
-explain="This script will install Python3, create a virtual environment, activate it, and install Ansible within the virtual environment."
+title="Install Ansible and folder tree structure\n\n"
+explain="According to recommended best practice, this script will:\nInstall Python3, pip, and Ansible;\nCreate the tree structure and models in the project folder."
 # Default project path is the user's home directory
 path="$HOME"
-venv_name="ansible_venv"
+# List of packages to install, separated by spaces
 packages="tree python3 python3-pip python3-venv"
 
 # Script
@@ -39,13 +47,13 @@ linux_family=$(detect_linux_family)
 
 case $linux_family in
     "debian" | "ubuntu")
-        install_command="sudo apt install -y"
+        install_command="sudo apt install"
         ;;
     "rhel" | "fedora")
         if command -v dnf &> /dev/null; then
-            install_command="sudo dnf install -y"
+            install_command="sudo dnf install"
         elif command -v yum &> /dev/null; then
-            install_command="sudo yum install -y"
+            install_command="sudo yum install"
         else
             echo "Neither DNF nor YUM is available for package installation."
             exit 1
@@ -58,23 +66,43 @@ case $linux_family in
 esac
 
 # Use eval to install packages according to distribution (automatic selection of package managers)
-eval "$install_command $packages"
+eval "$install_command -y $packages"
 
-# Create a virtual environment
-python3 -m venv "$path/$venv_name"
+# Install Python 3 and Ansible
+if ! command -v python3 &>/dev/null; then
+    echo "Installing Python3..."
+    eval "$install_command -y python3"
+fi
 
-# Activate the virtual environment
-source "$path/$venv_name/bin/activate"
+if ! command -v pip3 &>/dev/null; then
+    echo "Installing pip3..."
+    eval "$install_command -y python3-pip"
+fi
 
-# Install Ansible in the virtual environment
-pip install ansible
+if ! command -v ansible &>/dev/null; then
+    echo "Installing Ansible..."
+    sudo python3 -m pip install --user ansible
+fi
 
-# Check if Ansible is installed
-if command -v ansible &>/dev/null; then
-    echo "Ansible has been successfully installed in the virtual environment."
-    echo "You can deactivate the virtual environment with 'deactivate'."
+# Check if Ansible environment is active
+if [ -n "$VIRTUAL_ENV" ]; then
+    echo "Ansible environment is already active."
 else
-    echo "Failed to install Ansible. Please check for any errors in the installation process."
+    echo "Activating Ansible environment..."
+    if [ -d "$path/ansible-env" ]; then
+        source "$path/ansible-env/bin/activate"
+    else
+        echo "Ansible environment not found. You may need to create it first."
+    fi
+fi
+
+# Check environment
+if [ -n "$VIRTUAL_ENV" ]; then
+    echo "Environment is active."
+    ansible --version
+    python --version
+else
+    echo "Environment is not active."
 fi
 
 # Check loop for project and tree creation
