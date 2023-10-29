@@ -10,7 +10,7 @@
 #!/bin/bash
 
 # Get the current user and their home directory
-if [[ -n $SUDO_USER ]]; then
+if [ -n $SUDO_USER ]; then
     user_name="$SUDO_USER"
 else
     user_name="$USER"
