@@ -12,7 +12,7 @@
 #!/bin/bash
 
 # Get the current user and their home directory
-if [ -n $SUDO_USER ]; then
+if [ -n "$SUDO_USER" ]; then
     user_name="$SUDO_USER"
 else
     user_name="$USER"
@@ -96,23 +96,77 @@ else
     source "$ansible_env/bin/activate"
 fi
 
-# Install Ansible within the virtual environment
-if ! command -v ansible &>/dev/null; then
-    echo "Installing Ansible..."
-    pip install ansible
-fi
-
 # Display Python and Ansible versions
 echo "Python $(python --version 2>&1)"
 echo "Ansible $(ansible --version | grep ansible_version | cut -d ' ' -f 2)"
 
-# Check loop for project and tree creation
-while true; do
-    read -p "Please enter the project name (directory name): " project_name
+# Check if Ansible environment is active
+if [ -n "$VIRTUAL_ENV" ]; then
+    # Install Ansible within the virtual environment
+    if ! command -v ansible &>/dev/null; then
+        echo "Installing Ansible..."
+        pip install ansible
+    fi
 
-    if [ -d "$path/$project_name" ]; then
-        if [ -z "$(ls -A "$path/$project_name")" ]; then
-            echo "The directory exists and is empty. Create the Ansible project tree."
+    # Generate a fully commented Ansible configuration file
+    echo -e "[defaults]\nroles_path = roles" > "$user_home/ansible.cfg"
+
+    # Check loop for project and tree creation
+    while true; do
+        read -p "Please enter the project name (directory name): " project_name
+
+        if [ -d "$path/$project_name" ]; then
+            if [ -z "$(ls -A "$path/$project_name")" ]; then
+                echo "The directory exists and is empty. Create the Ansible project tree."
+
+                # Creating the Ansible tree structure in one sudo command with line breaks
+                sudo mkdir -p "$path/$project_name/production" \
+                    "$path/$project_name/staging" \
+                    "$path/$project_name/group_vars/clear" \
+                    "$path/$project_name/group_vars/secret" \
+                    "$path/$project_name/host_vars" \
+                    "$path/$project_name/library" \
+                    "$path/$project_name/module_utils" \
+                    "$path/$project_name/filter_plugins" \
+                    "$path/$project_name/roles/common/tasks" \
+                    "$path/$project_name/roles/common/handlers" \
+                    "$path/$project_name/roles/common/templates" \
+                    "$path/$project_name/roles/common/files" \
+                    "$path/$project_name/roles/common/vars" \
+                    "$path/$project_name/roles/common/defaults" \
+                    "$path/$project_name/roles/common/meta" \
+                    "$path/$project_name/roles/common/library" \
+                    "$path/$project_name/roles/common/module_utils" \
+                    "$path/$project_name/roles/common/lookup_plugins" \
+                    "$path/$project_name/roles/webtier/tasks" \
+                    "$path/$project_name/roles/webtier/handlers" \
+                    "$path/$project_name/roles/webtier/templates" \
+                    "$path/$project_name/roles/webtier/files" \
+                    "$path/$project_name/roles/webtier/vars" \
+                    "$path/$project_name/roles/webtier/defaults" \
+                    "$path/$project_name/roles/webtier/meta" \
+                    "$path/$project_name/roles/webtier/library" \
+                    "$path/$project_name/roles/webtier/module_utils" \
+                    "$path/$project_name/roles/webtier/lookup_plugins"
+
+                # File creation site.yml, webservers.yml, dbservers.yml
+                sudo touch "$path/$project_name/site.yml" \
+                    "$path/$project_name/webservers.yml" \
+                    "$path/$project_name/dbservers.yml"
+
+                # Structure display
+                echo "Ansible structure has been created in the $path/$project_name."
+                tree -a "$path/$project_name"
+
+                break
+            else
+                echo "The directory exists, but is not empty. Directory contents :"
+                ls "$path/$project_name"
+                read -p "Please choose another project name: " project_name
+            fi
+        else
+            sudo mkdir -p "$path/$project_name"
+            echo "No directory named $project_name was found, so it was created."
 
             # Creating the Ansible tree structure in one sudo command with line breaks
             sudo mkdir -p "$path/$project_name/production" \
@@ -155,60 +209,8 @@ while true; do
 
             # Structure display
             echo "Ansible structure has been created in the $path/$project_name."
-            tree -a "$path/$project_name"
 
             break
-        else
-            echo "The directory exists, but is not empty. Directory contents :"
-            ls "$path/$project_name"
-            read -p "Please choose another project name: " project_name
         fi
-    else
-        sudo mkdir -p "$path/$project_name"
-        echo "No directory named $project_name was found, so it was created."
-
-        # Creating the Ansible tree structure in one sudo command with line breaks
-        sudo mkdir -p "$path/$project_name/production" \
-            "$path/$project_name/staging" \
-            "$path/$project_name/group_vars/clear" \
-            "$path/$project_name/group_vars/secret" \
-            "$path/$project_name/host_vars" \
-            "$path/$project_name/library" \
-            "$path/$project_name/module_utils" \
-            "$path/$project_name/filter_plugins" \
-            "$path/$project_name/roles/common/tasks" \
-            "$path/$project_name/roles/common/handlers" \
-            "$path/$project_name/roles/common/templates" \
-            "$path/$project_name/roles/common/files" \
-            "$path/$project_name/roles/common/vars" \
-            "$path/$project_name/roles/common/defaults" \
-            "$path/$project_name/roles/common/meta" \
-            "$path/$project_name/roles/common/library" \
-            "$path/$project_name/roles/common/module_utils" \
-            "$path/$project_name/roles/common/lookup_plugins" \
-            "$path/$project_name/roles/webtier/tasks" \
-            "$path/$project_name/roles/webtier/handlers" \
-            "$path/$project_name/roles/webtier/templates" \
-            "$path/$project_name/roles/webtier/files" \
-            "$path/$project_name/roles/webtier/vars" \
-            "$path/$project_name/roles/webtier/defaults" \
-            "$path/$project_name/roles/webtier/meta" \
-            "$path/$project_name/roles/webtier/library" \
-            "$path/$project_name/roles/webtier/module_utils" \
-            "$path/$project_name/roles/webtier/lookup_plugins"
-
-        # File creation site.yml, webservers.yml, dbservers.yml
-        sudo touch "$path/$project_name/site.yml" \
-            "$path/$project_name/webservers.yml" \
-            "$path/$project_name/dbservers.yml"
-
-        # Generates a fully commented Ansible configuration file
-        cd "$path/$project_name/"
-        echo -e "[defaults]\nroles_path = roles" > ansible.cfg
-
-        # Structure display
-        echo "Ansible structure has been created in the $path/$project_name."
-
-        break
-    fi
-done
+    done
+fi
