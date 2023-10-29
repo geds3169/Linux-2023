@@ -56,17 +56,17 @@ explain="According to recommended best practices, this script will create the di
 # Detect Linux distribution family
 linux_family=$(detect_linux_family)
 
-# List of packages to install
-packages=("tree" "python3" "ansible" "python3-pip")
+# List of packages to install, separated by spaces
+packages="tree python3 ansible python3-pip"
 
 # Install required packages
-for package in "${packages[@]}"; do
+for package in $packages; do
     install_package "$package"
 done
 
 # Display package versions
 printf "Installed packages:\n"
-for package in "${packages[@]}"; do
+for package in $packages; do
     printf "$package "
     if command -v $package &>/dev/null; then
         $package --version | head -n 1
