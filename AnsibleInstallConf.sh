@@ -20,15 +20,29 @@ fi
 
 user_home="/home/$user_name"
 
-echo "The Ansible project and virtual environment will be placed in the user's home directory: $user_home"
+echo "The Ansible project will be placed in the user's home directory: $user_home"
+
+# Function to detect the Linux distribution family
+detect_linux_family() {
+    if [ -e /etc/os-release ]; then
+        linux_family=$(grep -i "^ID_LIKE" /etc/os-release | cut -d'=' -f2)
+        if [ -z "$linux_family" ]; then
+            linux_family=$(grep -i "^ID" /etc/os-release | cut -d'=' -f2)
+        fi
+        echo "$linux_family"
+    else
+        echo "Unknown"
+    fi
+}
 
 # Variables
 title="Install Ansible and folder tree structure\n\n"
-explain="According to recommended best practice, this script will:\nInstall Python3, pip, and Ansible;\nCreate the tree structure and models in the project folder."
+explain="According to recommended best practice, this script will install Ansible and create the tree structure and models in the project folder."
 # Default project path is the user's home directory
 path="$user_home"
+
 # List of packages to install, separated by spaces
-packages="tree python3 python3-pip"
+packages="ansible tree python3 python3-pip"
 
 # Script
 echo -e "$title"
@@ -41,17 +55,8 @@ if [ "$(id -u)" != "0" ]; then
 fi
 
 # Check distribution family to use correct installation commands
-if [ -e /etc/os-release ]; then
-    linux_family=$(grep -i "^ID_LIKE" /etc/os-release | cut -d'=' -f2)
-    if [ -z "$linux_family" ]; then
-        linux_family=$(grep -i "^ID" /etc/os-release | cut -d'=' -f2)
-    fi
-else
-    echo "Unknown"
-    exit 1
-fi
+linux_family=$(detect_linux_family)
 
-# Use eval to install packages according to distribution (automatic selection of package managers)
 case $linux_family in
     "debian" | "ubuntu")
         install_command="sudo apt install"
@@ -72,26 +77,25 @@ case $linux_family in
         ;;
 esac
 
-# Install required packages
+# Use eval to install packages according to distribution (automatic selection of package managers)
 eval "$install_command -y $packages"
 
-# Check if Ansible is already installed
+# Check if Ansible is installed
 if ! command -v ansible &>/dev/null; then
-    # Install Python 3 and Ansible
-    if ! command -v python3 &>/dev/null; then
-        echo "Installing Python3..."
-        eval "$install_command -y python3"
-    fi
+    echo "Failed to install Ansible. Please check your package manager or installation process."
+    exit 1
+fi
 
-    if ! command -v pip3 &>/dev/null; then
-        echo "Installing pip3..."
-        eval "$install_command -y python3-pip"
-    fi
+# Check if Python 3 is installed
+if ! command -v python3 &>/dev/null; then
+    echo "Failed to install Python 3. Please check your package manager or installation process."
+    exit 1
+fi
 
-    echo "Installing Ansible..."
-    pip3 install ansible
-else
-    echo "Ansible is already installed."
+# Check if PIP is installed
+if ! command -v pip3 &>/dev/null; then
+    echo "Failed to install PIP. Please check your package manager or installation process."
+    exit 1
 fi
 
 # Check loop for project and tree creation
@@ -137,13 +141,18 @@ while true; do
                 "$path/$project_name/webservers.yml" \
                 "$path/$project_name/dbservers.yml"
 
-            # Generates a fully commented Ansible configuration file
-            echo -e "[defaults]\nroles_path = roles" > "$user_home/ansible.cfg"
+            # Check if Ansible is functional
+            ansible --version
 
-            # Structure display
-            echo "Ansible structure has been created in the $path/$project_name."
-            tree -a "$path/$project_name"
+            # Check Python and PIP versions
+            python3 --version
+            pip3 --version
 
+            # Display the contents of the project directory
+            echo "Contents of the project directory ($path/$project_name):"
+            ls -a "$path/$project_name"
+
+            echo "All tasks have been completed. The script is finished."
             break
         else
             echo "The directory exists, but is not empty. Directory contents :"
@@ -189,11 +198,18 @@ while true; do
             "$path/$project_name/webservers.yml" \
             "$path/$project_name/dbservers.yml"
 
-        # Generates a fully commented Ansible configuration file
-        echo -e "[defaults]\nroles_path = roles" > "$user_home/ansible.cfg"
+        # Check if Ansible is functional
+        ansible --version
 
-        # Structure display
-        echo "Ansible structure has been created in the $path/$project_name."
+        # Check Python and PIP versions
+        python3 --version
+        pip3 --version
+
+        # Display the contents of the project directory
+        echo "Contents of the project directory ($path/$project_name):"
+        ls -a "$path/$project_name"
+
+        echo "All tasks have been completed. The script is finished."
 
         break
     fi
