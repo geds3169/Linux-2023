@@ -56,19 +56,17 @@ explain="According to recommended best practices, this script will create the di
 # Detect Linux distribution family
 linux_family=$(detect_linux_family)
 
-# List of packages to install, separated by spaces
-packages="tree python3 ansible python3-pip"
-
-IFS=" " read -ra package_array <<< "$packages"
+# List of packages to install
+packages=("tree" "python3" "ansible" "python3-pip")
 
 # Install required packages
-for package in "${package_array[@]}"; do
+for package in "${packages[@]}"; do
     install_package "$package"
 done
 
 # Display package versions
 printf "Installed packages:\n"
-for package in "${package_array[@]}"; do
+for package in "${packages[@]}"; do
     printf "$package "
     if command -v $package &>/dev/null; then
         $package --version | head -n 1
@@ -152,38 +150,6 @@ while true; do
             "$project_directory/webservers.yml" \
             "$project_directory/dbservers.yml"
 
-        # Create an ansible.cfg file with custom settings
-        cat <<EOL > "$project_directory/ansible.cfg"
-[defaults]
-vault_password_file = /path/to/vault_password_file
-vault_identity_list = /path/to/secret_vars.yml
-EOL
-
-        # Create a vault.yaml file with an example
-        cat <<EOL > "$project_directory/vault.yaml"
----
-mysql_user: "admin"
-mysql_password: "Test_34535"
-root_password: "Test_34049"
-EOL
-
-        # Create a .gitignore file
-        cat <<EOL > "$project_directory/.gitignore"
-**/*vault*
-**/*secret.yml*
-**/*secret_data/*
-**/*.log
-temp/
-data/
-requirements.yml
-my_ansible.cfg
-user_configs/
-EOL
-
-        printf "\nRemember:\n"
-        printf "    - Modify the contents of the ansible.cfg file for vault configuration and other purposes.\n"
-        printf "    - Encrypt your secret files (example vault.yml) and fill in the .gitignore\n\n"
-
         # Just a message reminding you of the directory creation and the project name
         printf "Project structure has been created for '$project_name'.\n\n"
 
@@ -193,4 +159,4 @@ EOL
 done
 
 printf "All tasks have been completed. The script is finished.\n"
-
+echo "test"
