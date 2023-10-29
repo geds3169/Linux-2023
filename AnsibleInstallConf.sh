@@ -32,7 +32,7 @@ detect_linux_family() {
 title="Install Ansible and folder tree structure\n\n"
 explain="According to recommended best practice, this script will:\nInstall Python3, pip, and Ansible;\nCreate the tree structure and models in the project folder."
 # Default project path is the user's home directory
-path="$HOME"
+path="$current_user_home"
 # List of packages to install, separated by spaces
 packages="tree python3 python3-pip python3-venv"
 
