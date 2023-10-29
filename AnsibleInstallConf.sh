@@ -1,3 +1,14 @@
+######################################
+# Nom du script:  AnsibleInstallConf.sh
+# Utilité: Ce script installe Ansible et configure la structure de répertoire conformément aux meilleures pratiques.
+# Utilisation: 
+#   - Assurez-vous que le script est exécutable avec : sudo chmod +x AnsibleInstallConf.sh
+#   - Exécutez le script avec : sudo -H ./AnsibleInstallConf.sh
+#   - L'option -H garantit que le répertoire du projet et l'environnement Ansible sont créés dans le répertoire de l'utilisateur qui exécute le script.
+# Auteur: Guilhem SCHLOSSER
+# Dernière mise à jour: 28/10/2023
+######################################
+
 #!/bin/bash
 
 # Get the current user and their home directory
