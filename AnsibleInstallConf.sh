@@ -73,7 +73,7 @@ printf "Installed packages:\n"
 for package in "${packages[@]}"; do
     printf "$package "
     if command -v $package &>/dev/null; then
-        $package --version | head -n 1
+        $($package --version | head -n 1)
     else
         printf "Not installed\n"
     fi
