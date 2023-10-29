@@ -1,28 +1,26 @@
 ######################################
 # Nom du script:  AnsibleInstallConf.sh
 # Utilité: ce script permet l'installation de Ansible ainsi que son arborescence suivant les recommandations et bonnes pratiques
-# Usage: sudo; chmod +x AnsibleInstallConf.sh
+# Usage: sudo chmod +x AnsibleInstallConf.sh
+#        sudo -H ./AnsibleInstallConf.sh # -H permet de garantir que le répertoire du projet et l'environnement Ansible sont créés dans le répertoire de l'utilisateur qui exécute le script.
 # Auteur: Guilhem SCHLOSSER
 # Mise à jour le: 28/10/2023
 ######################################
 
 #!/bin/bash
 
-# Get the current user and their home directory (ensures that the project folder will be in the home directory of the user running the script, even if it's played in sudo)
+# Get the current user and their home directory
 current_user=$(whoami)
 current_user_home=$(eval echo ~$current_user)
 
 # Function to detect the Linux distribution family
 detect_linux_family() {
     if [ -e /etc/os-release ]; then
-        . /etc/os-release
-        if [ -n "$ID_LIKE" ]; then
-            echo "$ID_LIKE"
-        elif [ -n "$ID" ]; then
-            echo "$ID"
-        else
-            echo "Unknown"
+        linux_family=$(grep -i "^ID_LIKE" /etc/os-release | cut -d'=' -f2)
+        if [ -z "$linux_family" ]; then
+            linux_family=$(grep -i "^ID" /etc/os-release | cut -d'=' -f2)
         fi
+        echo "$linux_family"
     else
         echo "Unknown"
     fi
@@ -93,8 +91,9 @@ if [ -n "$VIRTUAL_ENV" ]; then
     echo "Ansible environment is already active."
 else
     echo "Activating Ansible environment..."
-    if [ -d "$path/ansible-env" ]; then
-        source "$path/ansible-env/bin/activate"
+    ansible_env="$current_user_home/ansible-env"  # Absolute path to the Ansible environment
+    if [ -d "$ansible_env" ]; then
+        source "$ansible_env/bin/activate"
     else
         echo "Ansible environment not found. You may need to create it first."
     fi
