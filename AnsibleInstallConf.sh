@@ -30,7 +30,7 @@ install_package() {
     case $linux_family in
         "debian" | "ubuntu")
             install_command="sudo apt-get install"
-            check_command="dpkg -l | grep $package_name"
+            check_command="dpkg -l | grep -E '^ii  $package_name ' | awk '{print $3}'"
             ;;
         "rhel" | "fedora")
             if command -v dnf &> /dev/null; then
@@ -50,20 +50,36 @@ install_package() {
             ;;
     esac
 
-    # Check if the package is already installed
-    if eval "$check_command" &>/dev/null; then
-        printf "$package_name is already installed.\n"
+    # Check if the package is already installed and get its version
+    version=$(eval "$check_command")
+    if [ -n "$version" ]; then
+        printf "$package_name is already installed (version $version).\n"
     else
         # Use eval to install the package only if it's not already installed
         eval "$install_command -y $package_name"
+        version=$(eval "$check_command")
+        if [ -n "$version" ]; then
+            printf "$package_name has been installed (version $version).\n"
+        else
+            printf "Failed to install $package_name.\n"
+        fi
     fi
 }
+
+# Variables
+title="####################################\n# Install Ansible and create folder tree structure #\n####################################\n\n"
+explain="According to recommended best practices, this script will create the directory structure for your project.\n\n"
 
 # Detect Linux distribution family
 linux_family=$(detect_linux_family)
 
 # List of packages to install
-packages="tree python3 ansible python3-pip"
+packages=("tree" "python3" "ansible" "python3-pip")
+
+# Install required packages
+for package in "${packages[@]}"; do
+    install_package "$package"
+done
 
 # Get the current user and their home directory
 if [ -n "$SUDO_USER" ]; then
@@ -75,24 +91,21 @@ fi
 user_home="/home/$user_name"
 
 while true; do
-    title="####################################\n# Install Ansible and create folder tree structure #\n####################################\n\n"
-    explain="According to recommended best practices, this script will create the directory structure for your project.\n\n"
-    
     printf "$title"
     printf "$explain"
-    
+
     # Ask for the project name (directory name)
     printf "Please enter the project name (directory name), or type 'exit' to quit: "
     read project_name
-    
+
     if [ "$project_name" = "exit" ]; then
         printf "\nExiting the script.\n\n"
         exit 0
     fi
-    
+
     # Create the project directory
     project_directory="$user_home/$project_name"
-    
+
     # Check if the project directory already exists
     if [ -d "$project_directory" ]; then
         printf "\nProject directory '$project_directory' already exists.\n\n"
@@ -106,7 +119,7 @@ while true; do
             printf "\nFailed to create project directory '$project_directory'.\n\n"
             exit 1
         fi
-    
+
         # Create the directory structure
         mkdir -p "$project_directory/production" \
             "$project_directory/staging" \
@@ -136,7 +149,7 @@ while true; do
             "$project_directory/roles/webtier/library" \
             "$project_directory/roles/webtier/module_utils" \
             "$project_directory/roles/webtier/lookup_plugins"
-    
+
         # Create site.yml, webservers.yml, dbservers.yml files
         touch "$project_directory/site.yml" \
             "$project_directory/webservers.yml" \
@@ -171,8 +184,6 @@ EOL
         printf "\nRemember:\n"
         printf "    - Modify the contents of the ansible.cfg file for vault configuration and other purposes.\n"
         printf "    - Encrypt your secret files (example vault.yml) and fill in the .gitignore\n\n"
-        # Just a message reminding you of the directory creation and the project name
-        printf "Project structure has been created for '$project_name'.\n\n"
     fi
 done
 
