@@ -20,34 +20,29 @@ fi
 
 user_home="/home/$user_name"
 
-# Fonction pour détecter la famille de distribution Linux
+# Function to detect the Linux distribution family
 detect_linux_family() {
     if [ -e /etc/os-release ]; then
         linux_family=$(grep -i "^ID_LIKE" /etc/os-release | cut -d'=' -f2)
         if [ -z "$linux_family" ]; then
             linux_family=$(grep -i "^ID" /etc/os-release | cut -d'=' -f2)
         fi
-        echo "$linux_family"
+        printf "$linux_family"
     else
-        echo "Unknown"
+        printf "Unknown"
     fi
-}
-
-# Fonction pour afficher un avertissement en orange
-print_warning() {
-    echo -e "\e[93mWarning: $1\e[0m"
 }
 
 # Variables
 title="####################################\n# Install Ansible and create folder tree structure #\n####################################\n\n"
-explain="According to recommended best practices, this script will create the directory structure for your project.\n"
-# Utiliser la variable user_home pour définir le chemin du répertoire personnel de l'utilisateur
+explain="According to recommended best practices, this script will create the directory structure for your project.\n\n"
+# Use the user_home variable to define the user's home directory path
 path="$user_home"
 
-# Vérifier si Ansible est installé
+# Check if Ansible is installed
 if ! command -v ansible &>/dev/null; then
-    print_warning "Ansible is not installed. Installing Ansible..."
-    # Vérifier la famille de distribution pour utiliser les commandes d'installation appropriées
+    printf "\nWarning: Ansible is not installed. Installing Ansible...\n\n"
+    # Check the Linux distribution family to use the appropriate installation commands
     linux_family=$(detect_linux_family)
     case $linux_family in
         "debian" | "ubuntu")
@@ -59,67 +54,67 @@ if ! command -v ansible &>/dev/null; then
             elif command -v yum &> /dev/null; then
                 install_command="sudo yum install"
             else
-                print_warning "Neither DNF nor YUM is available for package installation."
+                printf "Warning: Neither DNF nor YUM is available for package installation.\n\n"
                 exit 1
             fi
             ;;
         *)
-            print_warning "Distribution family not supported."
+            printf "Warning: Distribution family not supported.\n\n"
             exit 1
             ;;
     esac
-    # Utiliser eval pour installer Ansible en fonction de la distribution (sélection automatique des gestionnaires de paquets)
+    # Use eval to install Ansible based on the distribution (automatically selecting package managers)
     eval "$install_command -y ansible"
 fi
 
-# Vérifier si Python est installé
-if ! command -v python &>/dev/null; then
-    print_warning "Python is not installed. Please install Python."
+# Check if Python3 is installed
+if ! command -v python3 &>/dev/null; then
+    printf "\nWarning: Python3 is not installed. Please install Python3.\n\n"
 else
-    # Afficher la version de Python
-    python_version=$(python --version 2>&1)
-    echo "Python version: $python_version"
+    # Display the Python3 version
+    python_version=$(python3 --version 2>&1)
+    printf "Python3 version: $python_version\n\n"
 fi
 
-# Vérifier si PIP est installé
-if ! command -v pip &>/dev/null; then
-    print_warning "PIP is not installed. Please install PIP."
+# Check if Pip3 is installed
+if ! command -v pip3 &>/dev/null; then
+    printf "\nWarning: Pip3 is not installed. Please install Pip3.\n\n"
 fi
 
-# Afficher la version d'Ansible
+# Display the Ansible version
 ansible_version=$(ansible --version | head -n 1)
-echo "Ansible version: $ansible_version"
+printf "Ansible version: $ansible_version\n\n"
 
 while true; do
     printf "$title"
     printf "$explain"
 
-    # Demander le nom du projet (nom du répertoire)
+    # Ask for the project name (directory name)
     read -p "Please enter the project name (directory name), or type 'exit' to quit: " project_name
 
     if [ "$project_name" = "exit" ]; then
-        echo "Exiting the script."
+        printf "\nExiting the script.\n\n"
         exit 0
     fi
 
-    # Créer le répertoire du projet
+    # Create the project directory
     project_directory="$path/$project_name"
     
-    # Vérifier si le répertoire du projet existe déjà
+    # Check if the project directory already exists
     if [ -d "$project_directory" ]; then
-        echo "Project directory '$project_directory' already exists."
+        printf "\nProject directory '$project_directory' already exists.\n\n"
     else
-        # Créer le répertoire du projet dans le répertoire personnel de l'utilisateur
+        # Create the project directory in the user's home directory
         if mkdir -p "$project_directory"; then
-            echo "Project '$project_name' has been created in '$project_directory'."
+            printf "\nProject '$project_name' has been created in '$project_directory'.\n"
             # Display a warning message
-            echo "Warning: You need to configure the ansible.cfg file in the project directory with your specific paths."
+            printf "Warning: You need to configure the ansible.cfg file in the project directory with your specific paths.\n\n"
         else
-            echo "Failed to create project directory '$project_directory'."
+            printf "\nFailed to create project directory '$project_directory'.\n\n"
             exit 1
         fi
 
-        # Création de la structure de répertoire
+        # Create the directory structure
         mkdir -p "$project_directory/production" \
             "$project_directory/staging" \
             "$project_directory/group_vars/clear" \
@@ -149,27 +144,48 @@ while true; do
             "$project_directory/roles/webtier/module_utils" \
             "$project_directory/roles/webtier/lookup_plugins"
 
-        # Création des fichiers site.yml, webservers.yml, dbservers.yml
+        # Create site.yml, webservers.yml, dbservers.yml files
         touch "$project_directory/site.yml" \
             "$project_directory/webservers.yml" \
             "$project_directory/dbservers.yml"
 
-        # Création d'un fichier ansible.cfg avec des paramètres personnalisés
-        echo -e "[defaults]\nvault_password_file = /path/to/vault_password_file\nvault_identity_list = /path/to/secret_vars.yml" | tee "$project_directory/ansible.cfg" > /dev/null
+        # Create an ansible.cfg file with custom settings
+        cat <<EOL > "$project_directory/ansible.cfg"
+[defaults]
+vault_password_file = /path/to/vault_password_file
+vault_identity_list = /path/to/secret_vars.yml
+EOL
 
-        # Création d'un fichier vault.yaml avec un exemple
-        echo -e "---\nmysql_user: \"admin\"\nmysql_password: \"Test_34535\"\nroot_password: \"Test_34049\"" | tee "$project_directory/vault.yaml" > /dev/null
-
-        # Création d'un fichier .gitignore pour exclure certains fichiers (fichier de coffre-fort préconfiguré)
-        echo -e "**/*vault*\n**/*secret.yml*\n**/*secret_data/*\n**/*.log\ntemp/\ndata/\nrequirements.yml\nmy_ansible.cfg\nuser_configs/" | tee "$project_directory/.gitignore" > /dev/null
+        # Create a vault.yaml file with an example
+        cat <<EOL > "$project_directory/vault.yaml"
+---
+mysql_user: "admin"
+mysql_password: "Test_34535"
+root_password: "Test_34049"
+EOL
+    
+        # Create a .gitignore file to exclude certain files (preconfigured vault file)
+        cat <<EOL > "$project_directory/.gitignore"
+**/*vault*
+**/*secret.yml*
+**/*secret_data/*
+**/*.log
+temp/
+data/
+requirements.yml
+my_ansible.cfg
+user_configs/
+EOL
 
         # Just a message reminding you of the directory creation and the project name
-        echo "Project structure has been created for '$project_name'."
+        printf "Project structure has been created for '$project_name'.\n\n"
 
-        # # Display the project tree with the 'tree' command
-        tree "$project_directory"
+        # Display the project tree with the 'tree' command
+        tree -a "$project_directory"
 
-    fi
+fi
 done
 
-echo "All tasks have been completed. The script is finished."
+printf "All tasks have been completed. The script is finished.\n"
+
+
