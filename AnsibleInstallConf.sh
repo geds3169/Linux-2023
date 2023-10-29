@@ -19,7 +19,7 @@ fi
 
 user_home="/home/$user_name"
 
-echo "The ansible project and virtual environment will be placed in the user's home directory : $user_home"
+echo "The Ansible project and virtual environment will be placed in the user's home directory: $user_home"
 
 # Function to detect the Linux distribution family
 detect_linux_family() {
@@ -78,34 +78,19 @@ esac
 # Use eval to install packages according to distribution (automatic selection of package managers)
 eval "$install_command -y $packages"
 
-# Install Python 3 and Ansible
+# Install Python 3
 if ! command -v python3 &>/dev/null; then
     echo "Installing Python3..."
     eval "$install_command -y python3"
 fi
 
-if ! command -v pip3 &>/dev/null; then
-    echo "Installing pip3..."
-    eval "$install_command -y python3-pip"
-fi
+# Create a virtual environment for Ansible
+echo "Creating a virtual environment for Ansible..."
+virtualenv "$user_home/ansible-env"
+source "$user_home/ansible-env/bin/activate"
 
-if ! command -v ansible &>/dev/null; then
-    echo "Installing Ansible..."
-    sudo python3 -m pip install ansible
-fi
-
-# Check if Ansible environment is active
-if [ -n "$VIRTUAL_ENV" ]; then
-    echo "Ansible environment is already active."
-else
-    echo "Activating Ansible environment..."
-    ansible_env="$current_user_home/ansible-env"  # Absolute path to the Ansible environment
-    if [ -d "$ansible_env" ]; then
-        source "$ansible_env/bin/activate"
-    else
-        echo "Ansible environment not found. You may need to create it first."
-    fi
-fi
+# Install Ansible in the virtual environment
+pip install ansible
 
 # Check environment
 if [ -n "$VIRTUAL_ENV" ]; then
@@ -118,7 +103,7 @@ fi
 
 # Check loop for project and tree creation
 while true; do
-    read -p "Please enter the project name (directory name) : " project_name
+    read -p "Please enter the project name (directory name): " project_name
 
     if [ -d "$path/$project_name" ]; then
         if [ -z "$(ls -A "$path/$project_name")" ]; then
@@ -171,7 +156,7 @@ while true; do
         else
             echo "The directory exists, but is not empty. Directory contents :"
             ls "$path/$project_name"
-            read -p "Please choose another project name : " project_name
+            read -p "Please choose another project name: " project_name
         fi
     else
         sudo mkdir -p "$path/$project_name"
