@@ -11,6 +11,15 @@
 
 #!/bin/bash
 
+# Get the current user and their home directory
+if [ -n "$SUDO_USER" ]; then
+    user_name="$SUDO_USER"
+else
+    user_name="$USER"
+fi
+
+user_home="/home/$user_name"
+
 # Fonction pour détecter la famille de distribution Linux
 detect_linux_family() {
     if [ -e /etc/os-release ]; then
@@ -27,8 +36,8 @@ detect_linux_family() {
 # Variables
 title="####################################\n# Install Ansible and create folder tree structure #\n####################################\n\n"
 explain="According to recommended best practices, this script will create the directory structure for your project.\n"
-# Le chemin par défaut du projet est le répertoire personnel de l'utilisateur
-path="/home/$USER"
+# Utiliser la variable user_home pour définir le chemin du répertoire personnel de l'utilisateur
+path="$user_home"
 
 # Vérifier si Ansible est installé
 if ! command -v ansible &>/dev/null; then
@@ -137,3 +146,4 @@ while true; do
 done
 
 echo "All tasks have been completed. The script is finished."
+
