@@ -1,7 +1,8 @@
 ######################################
 # Nom du script:  AnsibleInstallConf.sh
 # Utilité: ce script permet l'installation de Ansible ainsi que son arborescence suivant les recommandations et bonnes pratiques
-# Usage: sudo; chmod +x AnsibleInstallConf.sh
+# Usage: sudo chmod +x AnsibleInstallConf.sh
+#        sudo ./AnsibleInsatallConf.sh
 # Auteur: Guilhem SCHLOSSER
 # Mise à jour le: 28/10/2023
 # 
@@ -14,7 +15,7 @@
 # Function to detect the Linux distribution family
 detect_linux_family() {
     if [ -e /etc/os-release ]; then
-        source /etc/os-release
+        . /etc/os-release  # Utilisez un point au lieu de source
         echo "$ID_LIKE"
     else
         echo "Unknown"
