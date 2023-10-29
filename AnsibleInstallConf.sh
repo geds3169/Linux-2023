@@ -80,7 +80,7 @@ while true; do
     if [ -d "$project_directory" ]; then
         echo "Project directory '$project_directory' already exists."
     else
-        # Créer le répertoire du projet
+        # Créer le répertoire du projet dans le répertoire personnel de l'utilisateur
         if mkdir -p "$project_directory"; then
             echo "Project '$project_name' has been created in '$project_directory'."
         else
@@ -137,4 +137,3 @@ while true; do
 done
 
 echo "All tasks have been completed. The script is finished."
-
