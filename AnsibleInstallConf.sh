@@ -36,8 +36,11 @@ detect_linux_family() {
 }
 
 # Variables
-title="Install Ansible and folder tree structure\n\n"
-explain="According to recommended best practice, this script will install Ansible and create the tree structure and models in the project folder."
+title="
+####################################################
+# Install Ansible and create folder tree structure #
+####################################################\n\n"
+explain="According to recommended best practice, this script will install Ansible and create the tree structure and models in the project folder.\n"
 # Default project path is the user's home directory
 path="$user_home"
 
@@ -46,7 +49,7 @@ packages="tree python3 ansible"
 
 # Script
 echo -e "$title"
-echo -e "$explain"
+echo -e "\n$explain"
 
 # Check user privileges
 if [ "$(id -u)" != "0" ]; then
@@ -138,9 +141,7 @@ while true; do
             ansible --version
 
             # Create ansible.cfg with custom settings
-            echo "[defaults]" > "$path/$project_name/ansible.cfg"
-            echo "vault_password_file = /path/to/vault_password_file" >> "$path/$project_name/ansible.cfg"
-            echo "vault_identity_list = /path/to/secret_vars.yml" >> "$path/$project_name/ansible.cfg"
+            echo -e "[defaults]\nvault_password_file = /path/to/vault_password_file\nvault_identity_list = /path/to/secret_vars.yml" | sudo tee "$path/$project_name/ansible.cfg" > /dev/null
 
             # Display a warning message
             echo "Warning: You need to configure the ansible.cfg file in the project directory with your specific paths."
@@ -192,9 +193,10 @@ while true; do
         ansible --version
 
         # Create ansible.cfg with custom settings
-        echo "[defaults]" > "$path/$project_name/ansible.cfg"
-        echo "vault_password_file = /path/to/vault_password_file" >> "$path/$project_name/ansible.cfg"
-        echo "vault_identity_list = /path/to/secret_vars.yml" >> "$path/$project_name/ansible.cfg"
+        echo -e "[defaults]\nvault_password_file = /path/to/vault_password_file\nvault_identity_list = /path/to/secret_vars.yml" | sudo tee "$path/$project_name/ansible.cfg" > /dev/null
+
+        #Create vault.yaml with an example
+        echo -e "---\nmysql_user: "admin"\nmysql_password: "Test_34535$"\nroot_password: "Test_34049$""
 
         # Display a warning message
         echo "Warning: You need to configure the ansible.cfg file in the project directory with your specific paths."
@@ -202,4 +204,3 @@ while true; do
 done
 
 echo "All tasks have been completed. The script is finished."
-
