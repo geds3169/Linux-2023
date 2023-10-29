@@ -42,7 +42,7 @@ explain="According to recommended best practice, this script will install Ansibl
 path="$user_home"
 
 # List of packages to install, separated by spaces
-packages="ansible tree python3 python3-pip"
+packages="tree python3 python3-pip ansible"
 
 # Script
 echo -e "$title"
@@ -80,12 +80,6 @@ esac
 # Use eval to install packages according to distribution (automatic selection of package managers)
 eval "$install_command -y $packages"
 
-# Check if Ansible is installed
-if ! command -v ansible &>/dev/null; then
-    echo "Failed to install Ansible. Please check your package manager or installation process."
-    exit 1
-fi
-
 # Check if Python 3 is installed
 if ! command -v python3 &>/dev/null; then
     echo "Failed to install Python 3. Please check your package manager or installation process."
@@ -95,6 +89,14 @@ fi
 # Check if PIP is installed
 if ! command -v pip3 &>/dev/null; then
     echo "Failed to install PIP. Please check your package manager or installation process."
+    exit 1
+fi
+
+# Check if Ansible is installed
+if command -v ansible &>/dev/null; then
+    echo "Ansible is already installed."
+else
+    echo "Failed to install Ansible. Please check your package manager or installation process."
     exit 1
 fi
 
@@ -210,7 +212,6 @@ while true; do
         ls -a "$path/$project_name"
 
         echo "All tasks have been completed. The script is finished."
-
         break
     fi
 done
