@@ -80,15 +80,13 @@ esac
 # Use eval to install packages according to distribution (automatic selection of package managers)
 eval "$install_command -y $packages"
 
-while true; do
-    # Check if Ansible is installed
-    if command -v ansible &>/dev/null; then
-        echo "Ansible is already installed."
-    else
-        echo "Failed to install Ansible. Please check your package manager or installation process."
-        exit 1
-    fi
+# Check if Ansible is installed
+if ! command -v ansible &>/dev/null; then
+    echo "Failed to install Ansible. Please check your package manager or installation process."
+    exit 1
+fi
 
+while true; do
     # Check loop for project and tree creation
     read -p "Please enter the project name (directory name), or type 'exit' to quit: " project_name
 
@@ -139,9 +137,13 @@ while true; do
             # Check if Ansible is functional
             ansible --version
 
-            # Display the contents of the project directory
-            echo "Contents of the project directory ($path/$project_name):"
-            ls -a "$path/$project_name"
+            # Create ansible.cfg with custom settings
+            echo "[defaults]" > "$path/$project_name/ansible.cfg"
+            echo "vault_password_file = /path/to/vault_password_file" >> "$path/$project_name/ansible.cfg"
+            echo "vault_identity_list = /path/to/secret_vars.yml" >> "$path/$project_name/ansible.cfg"
+
+            # Display a warning message
+            echo "Warning: You need to configure the ansible.cfg file in the project directory with your specific paths."
         else
             echo "The directory exists, but is not empty. Directory contents :"
             ls "$path/$project_name"
@@ -189,10 +191,15 @@ while true; do
         # Check if Ansible is functional
         ansible --version
 
-        # Display the contents of the project directory
-        echo "Contents of the project directory ($path/$project_name):"
-        ls -a "$path/$project_name"
+        # Create ansible.cfg with custom settings
+        echo "[defaults]" > "$path/$project_name/ansible.cfg"
+        echo "vault_password_file = /path/to/vault_password_file" >> "$path/$project_name/ansible.cfg"
+        echo "vault_identity_list = /path/to/secret_vars.yml" >> "$path/$project_name/ansible.cfg"
+
+        # Display a warning message
+        echo "Warning: You need to configure the ansible.cfg file in the project directory with your specific paths."
     fi
 done
 
-echo "All tasks have been completed. The script is finished. Please make sure to configure your ansible.cfg file as needed."
+echo "All tasks have been completed. The script is finished."
+
