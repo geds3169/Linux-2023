@@ -42,26 +42,21 @@ fi
 
 # Check distribution family to use correct installation commands
 if [ -e /etc/os-release ]; then
-    source /etc/os-release
-    case "$ID_LIKE" in
-        debian)
-            install_command="sudo apt install"
-            ;;
-        rhel|fedora)
-            if command -v dnf &> /dev/null; then
-                install_command="sudo dnf install"
-            elif command -v yum &> /dev/null; then
-                install_command="sudo yum install"
-            else
-                echo "Neither DNF nor YUM is available for package installation."
-                exit 1
-            fi
-            ;;
-        *)
-            echo "Distribution family not supported."
+    if grep -q "Debian" /etc/os-release; then
+        install_command="sudo apt install"
+    elif grep -q "Fedora" /etc/os-release || grep -q "Red Hat" /etc/os-release; then
+        if command -v dnf &> /dev/null; then
+            install_command="sudo dnf install"
+        elif command -v yum &> /dev/null; then
+            install_command="sudo yum install"
+        else
+            echo "Neither DNF nor YUM is available for package installation."
             exit 1
-            ;;
-    esac
+        fi
+    else
+        echo "Distribution not supported."
+        exit 1
+    fi
 fi
 
 # Use eval to install packages according to distribution (automatic selection of package managers)
