@@ -8,6 +8,10 @@
 
 #!/bin/bash
 
+# Get the current user and their home directory (ensures that the project folder will be in the home directory of the user running the script, even if it's played in sudo)
+current_user=$(whoami)
+current_user_home=$(eval echo ~$current_user)
+
 # Function to detect the Linux distribution family
 detect_linux_family() {
     if [ -e /etc/os-release ]; then
