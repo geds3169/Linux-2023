@@ -63,7 +63,7 @@ install_package() {
 linux_family=$(detect_linux_family)
 
 # List of packages to install
-packages=("tree" "python3" "ansible" "python3-pip")
+packages="tree python3 ansible python3-pip"
 
 # Get the current user and their home directory
 if [ -n "$SUDO_USER" ]; then
@@ -166,13 +166,13 @@ requirements.yml
 my_ansible.cfg
 user_configs/
 EOL
-        # Just a message reminding you of the directory creation and the project name
-        printf "Project structure has been created for '$project_name'.\n\n"
         # Display the project tree with the 'tree' command
         tree -a "$project_directory"
         printf "\nRemember:\n"
         printf "    - Modify the contents of the ansible.cfg file for vault configuration and other purposes.\n"
         printf "    - Encrypt your secret files (example vault.yml) and fill in the .gitignore\n\n"
+        # Just a message reminding you of the directory creation and the project name
+        printf "Project structure has been created for '$project_name'.\n\n"
     fi
 done
 
