@@ -1,22 +1,16 @@
-######################################
-# Nom du script:  AnsibleInstallConf.sh
-# Utilité: ce script permet l'installation de Ansible ainsi que son arborescence suivant les recommandations et bonnes pratiques
-# Usage: sudo chmod +x AnsibleInstallConf.sh
-#        sudo ./AnsibleInsatallConf.sh
-# Auteur: Guilhem SCHLOSSER
-# Mise à jour le: 28/10/2023
-# 
-# Future implémentation gestion des secrets
-######################################
-
 #!/bin/bash
 
-# Functions
 # Function to detect the Linux distribution family
 detect_linux_family() {
     if [ -e /etc/os-release ]; then
-        . /etc/os-release  # Utilisez un point au lieu de source
-        echo "$ID_LIKE"
+        . /etc/os-release
+        if [ -n "$ID_LIKE" ]; then
+            echo "$ID_LIKE"
+        elif [ -n "$ID" ]; then
+            echo "$ID"
+        else
+            echo "Unknown"
+        fi
     else
         echo "Unknown"
     fi
@@ -24,7 +18,7 @@ detect_linux_family() {
 
 # Variables
 title="Install Ansible and folder tree structure\n\n"
-explain=" According to recommended best practice, this script will:\nInstall python3 & pip;\nInstall Ansible for the user;\nCreate the tree structure and models in the project folder."
+explain="According to recommended best practice, this script will:\nInstall Python3, pip, and Ansible;\nCreate the tree structure and models in the project folder."
 # Default project path is the user's home directory
 path="$HOME"
 # List of packages to install, separated by spaces
@@ -36,15 +30,18 @@ echo -e "$explain"
 
 # Check user privileges
 if [ "$(id -u)" != "0" ]; then
-    echo "Ce script doit être exécuté en tant que root ou avec des privilèges sudo."
+    echo "This script must be run as root or with sudo privileges."
     exit 1
 fi
 
 # Check distribution family to use correct installation commands
-if [ -e /etc/os-release ]; then
-    if grep -q "Debian" /etc/os-release; then
+linux_family=$(detect_linux_family)
+
+case $linux_family in
+    "debian" | "ubuntu")
         install_command="sudo apt install"
-    elif grep -q "Fedora" /etc/os-release || grep -q "Red Hat" /etc/os-release; then
+        ;;
+    "rhel" | "fedora")
         if command -v dnf &> /dev/null; then
             install_command="sudo dnf install"
         elif command -v yum &> /dev/null; then
@@ -53,35 +50,30 @@ if [ -e /etc/os-release ]; then
             echo "Neither DNF nor YUM is available for package installation."
             exit 1
         fi
-    else
-        echo "Distribution not supported."
+        ;;
+    *)
+        echo "Distribution family not supported."
         exit 1
-    fi
-fi
+        ;;
+esac
 
 # Use eval to install packages according to distribution (automatic selection of package managers)
 eval "$install_command -y $packages"
 
-# Checks if Ansible is already installed
-if ! command -v ansible &>/dev/null; then
-    # Installing Ansible according to the Linux family
-    linux_family=$(detect_linux_family)
+# Install Python 3 and Ansible
+if ! command -v python3 &>/dev/null; then
+    echo "Installing Python3..."
+    eval "$install_command -y python3"
+fi
 
-    case $linux_family in
-        "debian" | "ubuntu")
-            sudo apt update
-            sudo apt install -y python3-pip
-            sudo python3 -m pip install --user ansible
-            ;;
-        "centos" | "rhel")
-            sudo yum install -y python3-pip
-            sudo python3 -m pip install --user ansible
-            ;;
-        *)
-            echo "The Linux family is not supported for Ansible installation."
-            exit 1
-            ;;
-    esac
+if ! command -v pip3 &>/dev/null; then
+    echo "Installing pip3..."
+    eval "$install_command -y python3-pip"
+fi
+
+if ! command -v ansible &>/dev/null; then
+    echo "Installing Ansible..."
+    sudo python3 -m pip install --user ansible
 fi
 
 # Check loop for project and tree creation
@@ -129,7 +121,7 @@ while true; do
 
             # Generates a fully commented Ansible configuration file
             cd "$path/$project_name/"
-            sudo ansible-config init --disabled > ansible.cfg # Necessary to specify vault paths and limit commands
+            sudo ansible-config init --disabled > ansible.cfg
 
             # Structure display
             echo "Ansible structure has been created in the $path/$project_name."
@@ -182,21 +174,11 @@ while true; do
 
         # Generates a fully commented Ansible configuration file
         cd "$path/$project_name/"
-        sudo ansible-config init --disabled > ansible.cfg # Necessary to specify vault paths and limit commands
+        sudo ansible-config init --disabled > ansible.cfg
 
         # Structure display
         echo "Ansible structure has been created in the $path/$project_name."
-        tree -a "$path/$project_name"
-		
-		# Task End message
-		echo "Task End"
 
-		# Ask user to press a key to exit
-		read -p "Press any key to exit..."
-
-		# This line will pause the script until the user presses a key
-		read -n 1 -s
-		
         break
     fi
 done
