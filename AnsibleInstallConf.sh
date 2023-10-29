@@ -1,3 +1,14 @@
+######################################
+# Nom du script:  AnsibleInstallConf.sh
+# Utilité: Ce script installe Ansible et configure la structure de répertoire conformément aux meilleures pratiques.
+# Utilisation: 
+#   - Assurez-vous que le script est exécutable avec : sudo chmod +x AnsibleInstallConf.sh
+#   - Exécutez le script avec : sudo -H ./AnsibleInstallConf.sh
+#   - L'option -H garantit que le répertoire du projet et l'environnement Ansible sont créés dans le répertoire de l'utilisateur qui exécute le script.
+# Auteur: Guilhem SCHLOSSER
+# Dernière mise à jour: 28/10/2023
+######################################
+
 #!/bin/bash
 
 # Get the current user and their home directory
@@ -68,46 +79,32 @@ esac
 # Use eval to install packages according to distribution (automatic selection of package managers)
 eval "$install_command -y $packages"
 
-# Install Python 3 and Ansible
+# Install Python 3
 if ! command -v python3 &>/dev/null; then
     echo "Installing Python3..."
     eval "$install_command -y python3"
 fi
 
-if ! command -v pip3 &>/dev/null; then
-    echo "Installing pip3..."
-    eval "$install_command -y python3-pip"
-fi
+# Create Ansible environment if not already active
+ansible_env="$user_home/ansible-env"  # Absolute path to the Ansible environment
 
-if ! command -v ansible &>/dev/null; then
-    echo "Installing Ansible..."
-    sudo python3 -m pip install ansible
-fi
-
-# Check if Ansible environment is active
 if [ -n "$VIRTUAL_ENV" ]; then
     echo "Ansible environment is already active."
 else
-    echo "Activating Ansible environment..."
-    ansible_env="$user_home/ansible-env"  # Absolute path to the Ansible environment
-
-    if [ -d "$ansible_env" ]; then
-        source "$ansible_env/bin/activate"
-    else
-        echo "Creating Ansible environment..."
-        python3 -m venv "$ansible_env"
-        source "$ansible_env/bin/activate"
-    fi
+    echo "Creating Ansible environment..."
+    python3 -m venv "$ansible_env"
+    source "$ansible_env/bin/activate"
 fi
 
-# Check environment
-if [ -n "$VIRTUAL_ENV" ]; then
-    echo "Environment is active."
-    ansible --version
-    python --version
-else
-    echo "Environment is not active."
+# Install Ansible within the virtual environment
+if ! command -v ansible &>/dev/null; then
+    echo "Installing Ansible..."
+    pip install ansible
 fi
+
+# Display Python and Ansible versions
+echo "Python $(python --version 2>&1)"
+echo "Ansible $(ansible --version | grep ansible_version | cut -d ' ' -f 2)"
 
 # Check loop for project and tree creation
 while true; do
@@ -151,6 +148,10 @@ while true; do
             sudo touch "$path/$project_name/site.yml" \
                 "$path/$project_name/webservers.yml" \
                 "$path/$project_name/dbservers.yml"
+
+            # Generates a fully commented Ansible configuration file
+            cd "$path/$project_name/"
+            echo -e "[defaults]\nroles_path = roles" > ansible.cfg
 
             # Structure display
             echo "Ansible structure has been created in the $path/$project_name."
