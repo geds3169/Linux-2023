@@ -11,12 +11,6 @@
 
 #!/bin/bash
 
-# Check if Ansible, Python, and Pip are already installed
-if command -v ansible &>/dev/null && command -v python3 &>/dev/null && command -v pip3 &>/dev/null; then
-    echo "Ansible, Python, and Pip are already installed. Exiting."
-    exit 0
-fi
-
 # Function to detect the Linux distribution family
 detect_linux_family() {
     if [ -e /etc/os-release ]; then
@@ -35,12 +29,40 @@ title="
 ####################################################
 # Install Ansible and create folder tree structure #
 ####################################################\n\n"
-explain="According to recommended best practice, this script will install Ansible and create the tree structure and models in the project folder.\n"
+explain="According to recommended best practice, this script will create the tree structure and models in the project folder.\n"
 # Default project path is the user's home directory
 path="/home/$USER"
 
-# List of packages to install, separated by spaces
-packages="tree python3 ansible"
+# Check if Ansible is installed
+if ! command -v ansible &>/dev/null; then
+    echo "Ansible is not installed. Installing Ansible..."
+    
+    # Check distribution family to use correct installation commands
+    linux_family=$(detect_linux_family)
+    
+    case $linux_family in
+        "debian" | "ubuntu")
+            install_command="sudo apt install"
+            ;;
+        "rhel" | "fedora")
+            if command -v dnf &> /dev/null; then
+                install_command="sudo dnf install"
+            elif command -v yum &> /dev/null; then
+                install_command="sudo yum install"
+            else
+                echo "Neither DNF nor YUM is available for package installation."
+                exit 1
+            fi
+            ;;
+        *)
+            echo "Distribution family not supported."
+            exit 1
+            ;;
+    esac
+
+    # Use eval to install Ansible according to distribution (automatic selection of package managers)
+    eval "$install_command -y ansible"
+fi
 
 # Script
 printf "$title"
@@ -52,37 +74,8 @@ if [ "$(id -u)" != "0" ]; then
     exit 1
 fi
 
-# Check distribution family to use correct installation commands
-linux_family=$(detect_linux_family)
-
-case $linux_family in
-    "debian" | "ubuntu")
-        install_command="sudo apt install"
-        ;;
-    "rhel" | "fedora")
-        if command -v dnf &> /dev/null; then
-            install_command="sudo dnf install"
-        elif command -v yum &> /dev/null; then
-            install_command="sudo yum install"
-        else
-            echo "Neither DNF nor YUM is available for package installation."
-            exit 1
-        fi
-        ;;
-    *)
-        echo "Distribution family not supported."
-        exit 1
-        ;;
-esac
-
-# Use eval to install packages according to distribution (automatic selection of package managers)
-eval "$install_command -y $packages"
-
-# Check if Ansible is installed
-if ! command -v ansible &>/dev/null; then
-    echo "Failed to install Ansible. Please check your package manager or installation process."
-    exit 1
-fi
+# Default project path is the user's home directory
+path="/home/$USER"
 
 while true; do
     # Check loop for project and tree creation
@@ -202,3 +195,4 @@ while true; do
 done
 
 echo "All tasks have been completed. The script is finished."
+
