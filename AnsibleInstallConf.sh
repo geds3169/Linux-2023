@@ -59,14 +59,16 @@ linux_family=$(detect_linux_family)
 # List of packages to install, separated by spaces
 packages="tree python3 ansible python3-pip"
 
+IFS=" " read -ra package_array <<< "$packages"
+
 # Install required packages
-for package in $packages; do
+for package in "${package_array[@]}"; do
     install_package "$package"
 done
 
 # Display package versions
 printf "Installed packages:\n"
-for package in $packages; do
+for package in "${package_array[@]}"; do
     printf "$package "
     if command -v $package &>/dev/null; then
         $package --version | head -n 1
