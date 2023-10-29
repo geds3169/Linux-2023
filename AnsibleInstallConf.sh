@@ -74,9 +74,6 @@ if [ "$(id -u)" != "0" ]; then
     exit 1
 fi
 
-# Default project path is the user's home directory
-path="/home/$USER"
-
 while true; do
     # Check loop for project and tree creation
     read -p "Please enter the project name (directory name), or type 'exit' to quit: " project_name
@@ -195,4 +192,3 @@ while true; do
 done
 
 echo "All tasks have been completed. The script is finished."
-
