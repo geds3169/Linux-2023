@@ -33,6 +33,11 @@ detect_linux_family() {
     fi
 }
 
+# Fonction pour afficher un avertissement en orange
+print_warning() {
+    echo -e "\e[93mWarning: $1\e[0m"
+}
+
 # Variables
 title="####################################\n# Install Ansible and create folder tree structure #\n####################################\n\n"
 explain="According to recommended best practices, this script will create the directory structure for your project.\n"
@@ -41,11 +46,9 @@ path="$user_home"
 
 # Vérifier si Ansible est installé
 if ! command -v ansible &>/dev/null; then
-    echo "Ansible is not installed. Installing Ansible..."
-
+    print_warning "Ansible is not installed. Installing Ansible..."
     # Vérifier la famille de distribution pour utiliser les commandes d'installation appropriées
     linux_family=$(detect_linux_family)
-
     case $linux_family in
         "debian" | "ubuntu")
             install_command="sudo apt install"
@@ -56,19 +59,40 @@ if ! command -v ansible &>/dev/null; then
             elif command -v yum &> /dev/null; then
                 install_command="sudo yum install"
             else
-                echo "Neither DNF nor YUM is available for package installation."
+                print_warning "Neither DNF nor YUM is available for package installation."
                 exit 1
             fi
             ;;
         *)
-            echo "Distribution family not supported."
+            print_warning "Distribution family not supported."
             exit 1
             ;;
     esac
-
     # Utiliser eval pour installer Ansible en fonction de la distribution (sélection automatique des gestionnaires de paquets)
     eval "$install_command -y ansible"
 fi
+
+# Vérifier si Python est installé
+if ! command -v python &>/dev/null; then
+    print_warning "Python is not installed. Please install Python."
+fi
+
+# Vérifier si PIP est installé
+if ! command -v pip &>/dev/null; then
+    print_warning "PIP is not installed. Please install PIP."
+fi
+
+# Afficher la version d'Ansible
+ansible_version=$(ansible --version | head -n 1)
+echo "Ansible version: $ansible_version"
+
+# Afficher la version de Python
+python_version=$(python --version 2>&1)
+echo "Python version: $python_version"
+
+# Afficher la version de PIP
+pip_version=$(pip --version 2>&1)
+echo "PIP version: $pip_version"
 
 while true; do
     printf "$title"
@@ -145,5 +169,7 @@ while true; do
     fi
 done
 
-echo "All tasks have been completed. The script is finished."
+# Afficher l'arborescence du projet avec la commande 'tree'
+tree "$project_directory"
 
+echo "All tasks have been completed. The script is finished."
