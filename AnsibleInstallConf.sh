@@ -28,7 +28,7 @@ explain="According to recommended best practice, this script will:\nInstall Pyth
 # Default project path is the user's home directory
 path="$user_home"
 # List of packages to install, separated by spaces
-packages="tree python3 python3-pip python3-venv"
+packages="tree python3 python3-pip"
 
 # Script
 echo -e "$title"
@@ -93,25 +93,6 @@ if ! command -v ansible &>/dev/null; then
 else
     echo "Ansible is already installed."
 fi
-
-# Check if Ansible environment is active
-if [ -n "$VIRTUAL_ENV" ]; then
-    echo "Ansible environment is already active."
-else
-    echo "Activating Ansible environment..."
-    ansible_env="$user_home/ansible-env"  # Absolute path to the Ansible environment
-
-    if [ ! -d "$ansible_env" ]; then
-        echo "Creating Ansible environment..."
-        python3 -m venv "$ansible_env"
-    fi
-
-    source "$ansible_env/bin/activate"
-fi
-
-# Display Python and Ansible versions
-echo "Python $(python --version 2>&1)"
-echo "Ansible $(ansible --version | grep ansible_version | cut -d ' ' -f 2)"
 
 # Check loop for project and tree creation
 while true; do
