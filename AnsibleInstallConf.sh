@@ -42,7 +42,7 @@ explain="According to recommended best practice, this script will install Ansibl
 path="$user_home"
 
 # List of packages to install, separated by spaces
-packages="tree python3 python3-pip ansible"
+packages="tree python3 ansible"
 
 # Script
 echo -e "$title"
@@ -82,7 +82,7 @@ eval "$install_command -y $packages"
 
 # Check if Python 3 is installed
 if ! command -v python3 &>/dev/null; then
-    echo "Failed to install Python 3. Please check your package manager or installation process."
+    echo "Failed to install Python3. Please check your package manager or installation process."
     exit 1
 fi
 
