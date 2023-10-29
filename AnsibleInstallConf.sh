@@ -1,3 +1,14 @@
+######################################
+# Nom du script:  AnsibleInstallConf.sh
+# Utilité: Ce script installe Ansible et configure la structure de répertoire conformément aux meilleures pratiques.
+# Utilisation: 
+#   - Assurez-vous que le script est exécutable avec : sudo chmod +x AnsibleInstallConf.sh
+#   - Exécutez le script avec : sudo -H ./AnsibleInstallConf.sh
+#   - L'option -H garantit que le répertoire du projet et l'environnement Ansible sont créés dans le répertoire de l'utilisateur qui exécute le script.
+# Auteur: Guilhem SCHLOSSER
+# Dernière mise à jour: 28/10/2023
+######################################
+
 #!/bin/bash
 
 # Function to detect the Linux distribution family
@@ -39,14 +50,12 @@ install_package() {
             ;;
     esac
 
-    # Use eval to install the package only if it's not already installed
-    if ! command -v $package_name &>/dev/null; then
+    # Check if the package is already installed
+    if eval "$check_command" &>/dev/null; then
+        printf "$package_name is already installed.\n"
+    else
+        # Use eval to install the package only if it's not already installed
         eval "$install_command -y $package_name"
-    fi
-
-    # Check if the package is installed
-    if ! eval "$check_command" &>/dev/null; then
-        printf "Warning: $package_name is not installed.\n\n"
     fi
 }
 
@@ -55,11 +64,6 @@ linux_family=$(detect_linux_family)
 
 # List of packages to install
 packages=("tree" "python3" "ansible" "python3-pip")
-
-# Install and check required packages
-for package in "${packages[@]}"; do
-    install_package "$package"
-done
 
 # Get the current user and their home directory
 if [ -n "$SUDO_USER" ]; then
@@ -162,13 +166,13 @@ requirements.yml
 my_ansible.cfg
 user_configs/
 EOL
-        printf "\nRemember:\n"
-        printf "    - Modify the contents of the ansible.cfg file for vault configuration and other purposes.\n"
-        printf "    - Encrypt your secret files (example vault.yml) and fill in the .gitignore\n\n"
         # Just a message reminding you of the directory creation and the project name
         printf "Project structure has been created for '$project_name'.\n\n"
         # Display the project tree with the 'tree' command
         tree -a "$project_directory"
+        printf "\nRemember:\n"
+        printf "    - Modify the contents of the ansible.cfg file for vault configuration and other purposes.\n"
+        printf "    - Encrypt your secret files (example vault.yml) and fill in the .gitignore\n\n"
     fi
 done
 
