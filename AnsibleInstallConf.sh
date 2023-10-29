@@ -9,17 +9,6 @@
 # Dernière mise à jour: 28/10/2023
 ######################################
 
-######################################
-# Nom du script:  AnsibleInstallConf.sh
-# Utilité: Ce script installe Ansible et configure la structure de répertoire conformément aux meilleures pratiques.
-# Utilisation: 
-#   - Assurez-vous que le script est exécutable avec : sudo chmod +x AnsibleInstallConf.sh
-#   - Exécutez le script avec : sudo -H ./AnsibleInstallConf.sh
-#   - L'option -H garantit que le répertoire du projet et l'environnement Ansible sont créés dans le répertoire de l'utilisateur qui exécute le script.
-# Auteur: Guilhem SCHLOSSER
-# Dernière mise à jour: 28/10/2023
-######################################
-
 #!/bin/bash
 
 # Get the current user and their home directory
@@ -153,10 +142,6 @@ while true; do
             # Display the contents of the project directory
             echo "Contents of the project directory ($path/$project_name):"
             ls -a "$path/$project_name"
-
-            # Generates a fully commented Ansible configuration file
-            cd "$path/$project_name/"
-            sudo ansible-config init --disabled > ansible.cfg
         else
             echo "The directory exists, but is not empty. Directory contents :"
             ls "$path/$project_name"
@@ -207,11 +192,7 @@ while true; do
         # Display the contents of the project directory
         echo "Contents of the project directory ($path/$project_name):"
         ls -a "$path/$project_name"
-
-        # Generates a fully commented Ansible configuration file
-        cd "$path/$project_name/"
-        sudo ansible-config init --disabled > ansible.cfg
     fi
 done
 
-echo "All tasks have been completed. The script is finished."
+echo "All tasks have been completed. The script is finished. Please make sure to configure your ansible.cfg file as needed."
