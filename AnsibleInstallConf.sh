@@ -1,14 +1,3 @@
-######################################
-# Nom du script:  AnsibleInstallConf.sh
-# Utilité: Ce script installe Ansible et configure la structure de répertoire conformément aux meilleures pratiques.
-# Utilisation: 
-#   - Assurez-vous que le script est exécutable avec : sudo chmod +x AnsibleInstallConf.sh
-#   - Exécutez le script avec : sudo -H ./AnsibleInstallConf.sh
-#   - L'option -H garantit que le répertoire du projet et l'environnement Ansible sont créés dans le répertoire de l'utilisateur qui exécute le script.
-# Auteur: Guilhem SCHLOSSER
-# Dernière mise à jour: 28/10/2023
-######################################
-
 #!/bin/bash
 
 # Function to detect the Linux distribution family
@@ -30,12 +19,15 @@ install_package() {
     case $linux_family in
         "debian" | "ubuntu")
             install_command="sudo apt-get install"
+            check_command="dpkg -l | grep $package_name"
             ;;
         "rhel" | "fedora")
             if command -v dnf &> /dev/null; then
                 install_command="sudo dnf install"
+                check_command="rpm -q $package_name"
             elif command -v yum &> /dev/null; then
                 install_command="sudo yum install"
+                check_command="rpm -q $package_name"
             else
                 printf "Warning: Distribution family not supported. Packages may not be installed.\n\n"
                 return
@@ -51,34 +43,23 @@ install_package() {
     if ! command -v $package_name &>/dev/null; then
         eval "$install_command -y $package_name"
     fi
-}
 
-# Variables
-title="####################################\n# Install Ansible and create folder tree structure #\n####################################\n\n"
-explain="According to recommended best practices, this script will create the directory structure for your project.\n\n"
+    # Check if the package is installed
+    if ! eval "$check_command" &>/dev/null; then
+        printf "Warning: $package_name is not installed.\n\n"
+    fi
+}
 
 # Detect Linux distribution family
 linux_family=$(detect_linux_family)
 
 # List of packages to install
-packages="tree python3 ansible python3-pip"
+packages=("tree" "python3" "ansible" "python3-pip")
 
-# Install required packages
-for package in $packages; do
+# Install and check required packages
+for package in "${packages[@]}"; do
     install_package "$package"
 done
-
-# Display package versions
-printf "Installed packages:\n"
-for package in $packages; do
-    printf "$package "
-    if command -v $package &>/dev/null; then
-        $package --version | head -n 1
-    else
-        printf "Not installed\n"
-    fi
-done
-printf "\n"
 
 # Get the current user and their home directory
 if [ -n "$SUDO_USER" ]; then
@@ -90,21 +71,24 @@ fi
 user_home="/home/$user_name"
 
 while true; do
+    title="####################################\n# Install Ansible and create folder tree structure #\n####################################\n\n"
+    explain="According to recommended best practices, this script will create the directory structure for your project.\n\n"
+    
     printf "$title"
     printf "$explain"
-
+    
     # Ask for the project name (directory name)
     printf "Please enter the project name (directory name), or type 'exit' to quit: "
     read project_name
-
+    
     if [ "$project_name" = "exit" ]; then
         printf "\nExiting the script.\n\n"
         exit 0
     fi
-
+    
     # Create the project directory
     project_directory="$user_home/$project_name"
-
+    
     # Check if the project directory already exists
     if [ -d "$project_directory" ]; then
         printf "\nProject directory '$project_directory' already exists.\n\n"
@@ -118,7 +102,7 @@ while true; do
             printf "\nFailed to create project directory '$project_directory'.\n\n"
             exit 1
         fi
-
+    
         # Create the directory structure
         mkdir -p "$project_directory/production" \
             "$project_directory/staging" \
@@ -148,8 +132,7 @@ while true; do
             "$project_directory/roles/webtier/library" \
             "$project_directory/roles/webtier/module_utils" \
             "$project_directory/roles/webtier/lookup_plugins"
-
-
+    
         # Create site.yml, webservers.yml, dbservers.yml files
         touch "$project_directory/site.yml" \
             "$project_directory/webservers.yml" \
