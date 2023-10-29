@@ -60,9 +60,10 @@ linux_family=$(detect_linux_family)
 packages="tree python3 ansible python3-pip"
 
 # Install required packages
-for package in "${packages[@]}"; do
+for package in $packages; do
     install_package "$package"
 done
+
 
 # Display package versions
 printf "Installed packages:\n"
