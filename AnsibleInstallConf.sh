@@ -57,7 +57,7 @@ explain="According to recommended best practices, this script will create the di
 linux_family=$(detect_linux_family)
 
 # List of packages to install
-packages="python3" "python3-pip" "ansible"
+packages=("tree" "python3" "ansible" "python3-pip")
 
 # Install required packages
 for package in "${packages[@]}"; do
@@ -164,7 +164,7 @@ mysql_password: "Test_34535"
 root_password: "Test_34049"
 EOL
 
-        # Create a .gitignore file to exclude certain files (preconfigured vault file)
+        # Create a .gitignore file
         cat <<EOL > "$project_directory/.gitignore"
 **/*vault*
 **/*secret.yml*
