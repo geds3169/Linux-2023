@@ -92,7 +92,8 @@ while true; do
     printf "$explain"
 
     # Ask for the project name (directory name)
-    read -p "Please enter the project name (directory name), or type 'exit' to quit: " project_name
+    printf "Please enter the project name (directory name), or type 'exit' to quit: "
+    read project_name
 
     if [ "$project_name" = "exit" ]; then
         printf "\nExiting the script.\n\n"
