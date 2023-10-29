@@ -11,15 +11,6 @@
 
 #!/bin/bash
 
-# Get the current user and their home directory
-if [ -n "$SUDO_USER" ]; then
-    user_name="$SUDO_USER"
-else
-    user_name="$USER"
-fi
-
-user_home="/home/$user_name"
-
 # Function to detect the Linux distribution family
 detect_linux_family() {
     if [ -e /etc/os-release ]; then
@@ -33,57 +24,66 @@ detect_linux_family() {
     fi
 }
 
-# Variables
-title="####################################\n# Install Ansible and create folder tree structure #\n####################################\n\n"
-explain="According to recommended best practices, this script will create the directory structure for your project.\n\n"
-# Use the user_home variable to define the user's home directory path
-path="$user_home"
-
-# Check if Ansible is installed
-if ! command -v ansible &>/dev/null; then
-    printf "\nWarning: Ansible is not installed. Installing Ansible...\n\n"
-    # Check the Linux distribution family to use the appropriate installation commands
-    linux_family=$(detect_linux_family)
+# Function to install a package based on the distribution's package manager
+install_package() {
+    package_name="$1"
     case $linux_family in
         "debian" | "ubuntu")
-            install_command="sudo apt install"
+            if ! command -v $package_name &>/dev/null; then
+                sudo apt-get update
+                sudo apt-get install -y $package_name
+            fi
             ;;
         "rhel" | "fedora")
-            if command -v dnf &> /dev/null; then
-                install_command="sudo dnf install"
-            elif command -v yum &> /dev/null; then
-                install_command="sudo yum install"
-            else
-                printf "Warning: Neither DNF nor YUM is available for package installation.\n\n"
-                exit 1
+            if ! command -v $package_name &>/dev/null; then
+                if command -v dnf &> /dev/null; then
+                    sudo dnf install -y $package_name
+                elif command -v yum &> /dev/null; then
+                    sudo yum install -y $package_name
+                fi
             fi
             ;;
         *)
-            printf "Warning: Distribution family not supported.\n\n"
-            exit 1
+            printf "Warning: Distribution family not supported. Package $package_name may not be installed.\n\n"
             ;;
     esac
-    # Use eval to install Ansible based on the distribution (automatically selecting package managers)
-    eval "$install_command -y ansible"
-fi
+}
 
-# Check if Python3 is installed
-if ! command -v python3 &>/dev/null; then
-    printf "\nWarning: Python3 is not installed. Please install Python3.\n\n"
+# Variables
+title="####################################\n# Install Ansible and create folder tree structure #\n####################################\n\n"
+explain="According to recommended best practices, this script will create the directory structure for your project.\n\n"
+
+# Detect Linux distribution family
+linux_family=$(detect_linux_family)
+
+# List of packages to install
+packages=("python3" "python3-pip" "ansible")
+
+# Install required packages
+for package in "${packages[@]}"; do
+    install_package "$package"
+done
+
+# Display package versions
+printf "Installed packages:\n"
+for package in "${packages[@]}"; do
+    printf "$package "
+    if command -v $package &>/dev/null; then
+        $package --version | head -n 1
+    else
+        printf "Not installed\n"
+    fi
+done
+printf "\n"
+
+# Get the current user and their home directory
+if [ -n "$SUDO_USER" ]; then
+    user_name="$SUDO_USER"
 else
-    # Display the Python3 version
-    python_version=$(python3 --version 2>&1)
-    printf "Python3 version: $python_version\n\n"
+    user_name="$USER"
 fi
 
-# Check if Pip3 is installed
-if ! command -v pip3 &>/dev/null; then
-    printf "\nWarning: Pip3 is not installed. Please install Pip3.\n\n"
-fi
-
-# Display the Ansible version
-ansible_version=$(ansible --version | head -n 1)
-printf "Ansible version: $ansible_version\n\n"
+user_home="/home/$user_name"
 
 while true; do
     printf "$title"
@@ -98,8 +98,8 @@ while true; do
     fi
 
     # Create the project directory
-    project_directory="$path/$project_name"
-    
+    project_directory="$user_home/$project_name"
+
     # Check if the project directory already exists
     if [ -d "$project_directory" ]; then
         printf "\nProject directory '$project_directory' already exists.\n\n"
@@ -163,7 +163,7 @@ mysql_user: "admin"
 mysql_password: "Test_34535"
 root_password: "Test_34049"
 EOL
-    
+
         # Create a .gitignore file to exclude certain files (preconfigured vault file)
         cat <<EOL > "$project_directory/.gitignore"
 **/*vault*
@@ -177,12 +177,15 @@ my_ansible.cfg
 user_configs/
 EOL
 
+        printf "\nRemember:\n"
+        printf "    - Modify the contents of the ansible.cfg file for vault configuration and other purposes.\n"
+        printf "    - Encrypt your secret files (example vault.yml) and fill in the .gitignore\n\n"
+
         # Just a message reminding you of the directory creation and the project name
         printf "Project structure has been created for '$project_name'.\n\n"
 
         # Display the project tree with the 'tree' command
         tree -a "$project_directory"
-
     fi
 done
 
