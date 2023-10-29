@@ -80,29 +80,22 @@ esac
 # Use eval to install packages according to distribution (automatic selection of package managers)
 eval "$install_command -y $packages"
 
-# Check if Python 3 is installed
-if ! command -v python3 &>/dev/null; then
-    echo "Failed to install Python3. Please check your package manager or installation process."
-    exit 1
-fi
-
-# Check if PIP is installed
-if ! command -v pip3 &>/dev/null; then
-    echo "Failed to install PIP. Please check your package manager or installation process."
-    exit 1
-fi
-
-# Check if Ansible is installed
-if command -v ansible &>/dev/null; then
-    echo "Ansible is already installed."
-else
-    echo "Failed to install Ansible. Please check your package manager or installation process."
-    exit 1
-fi
-
-# Check loop for project and tree creation
 while true; do
-    read -p "Please enter the project name (directory name): " project_name
+    # Check if Ansible is installed
+    if command -v ansible &>/dev/null; then
+        echo "Ansible is already installed."
+    else
+        echo "Failed to install Ansible. Please check your package manager or installation process."
+        exit 1
+    fi
+
+    # Check loop for project and tree creation
+    read -p "Please enter the project name (directory name), or type 'exit' to quit: " project_name
+
+    if [ "$project_name" = "exit" ]; then
+        echo "Exiting the script."
+        exit 0
+    fi
 
     if [ -d "$path/$project_name" ]; then
         if [ -z "$(ls -A "$path/$project_name")" ]; then
@@ -146,16 +139,9 @@ while true; do
             # Check if Ansible is functional
             ansible --version
 
-            # Check Python and PIP versions
-            python3 --version
-            pip3 --version
-
             # Display the contents of the project directory
             echo "Contents of the project directory ($path/$project_name):"
             ls -a "$path/$project_name"
-
-            echo "All tasks have been completed. The script is finished."
-            break
         else
             echo "The directory exists, but is not empty. Directory contents :"
             ls "$path/$project_name"
@@ -203,15 +189,10 @@ while true; do
         # Check if Ansible is functional
         ansible --version
 
-        # Check Python and PIP versions
-        python3 --version
-        pip3 --version
-
         # Display the contents of the project directory
         echo "Contents of the project directory ($path/$project_name):"
         ls -a "$path/$project_name"
-
-        echo "All tasks have been completed. The script is finished."
-        break
     fi
 done
+
+echo "All tasks have been completed. The script is finished."
