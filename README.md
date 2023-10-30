@@ -22,6 +22,6 @@ AnsibleInstallConf.sh:
   
 - Créer l'arborescence Ansible selon les bonnes pratiques et recommandations
 - Générer différents projets de travail Ansible
-- Prise en compte des famille de distribution Linux afin d'utiliser les commandes appropriés à celle-ci pour l'installation des paquets
+- Prise en compte des famille de distribution Linux afin d'utiliser les commandes appropriés à celle-ci pour l'installation des paquets.
 
 Scirpt en cours d'élaboration, mais déjà fonctionnel. Testé sur Debian 12
